@@ -2,8 +2,6 @@
  * SQLite migrations. PRAGMA user_version for versioning.
  */
 import * as SQLite from "expo-sqlite";
-import { DEFAULT_PIN } from "@/constants/auth";
-import { generateUUID } from "@/lib/utils/uuid";
 
 export async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
   const { user_version } = (await database.getFirstAsync<{ user_version: number }>(
@@ -50,27 +48,6 @@ export async function runMigrations(database: SQLite.SQLiteDatabase): Promise<vo
       );
     `);
     await database.runAsync("PRAGMA user_version = 1");
-
-    const count = await database.getFirstAsync<{ count: number }>(
-      "SELECT COUNT(*) as count FROM users"
-    );
-    if (count && count.count === 0) {
-      const id = generateUUID();
-      const now = Date.now();
-      await database.runAsync(
-        `INSERT INTO users (id, name, role, pinHash, createdAt, updatedAt, syncStatus, convexId, deleted)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        id,
-        "Owner",
-        "OWNER",
-        DEFAULT_PIN,
-        now,
-        now,
-        "PENDING",
-        null,
-        0
-      );
-    }
   }
 
   if (user_version < 2) {
@@ -164,5 +141,128 @@ export async function runMigrations(database: SQLite.SQLiteDatabase): Promise<vo
       );
     `);
     await database.runAsync("PRAGMA user_version = 2");
+  }
+
+  if (user_version < 3) {
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS businesses (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        ownerName TEXT NOT NULL,
+        phone TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        country TEXT NOT NULL DEFAULT '',
+        city TEXT NOT NULL DEFAULT '',
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        syncStatus TEXT NOT NULL DEFAULT 'PENDING',
+        convexId TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0,
+        lastError TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        businessId TEXT NOT NULL,
+        planId TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'TRIAL',
+        trialStartAt INTEGER,
+        trialEndAt INTEGER,
+        currentPeriodStart INTEGER,
+        currentPeriodEnd INTEGER,
+        userLimit INTEGER NOT NULL,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        syncStatus TEXT NOT NULL DEFAULT 'PENDING',
+        convexId TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0,
+        lastError TEXT
+      );
+    `);
+    await database.runAsync("PRAGMA user_version = 3");
+  }
+
+  if (user_version < 4) {
+    const hasBusinesses = await database.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM businesses WHERE deleted = 0"
+    );
+    const hasUsers = await database.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM users WHERE deleted = 0"
+    );
+    if (hasUsers && hasUsers.count > 0 && (!hasBusinesses || hasBusinesses.count === 0)) {
+      const { generateUUID } = await import("@/lib/utils/uuid");
+      const now = Date.now();
+      const bizId = generateUUID();
+      const subId = generateUUID();
+      const trialEnd = now + 14 * 24 * 60 * 60 * 1000;
+      await database.runAsync(
+        `INSERT INTO businesses (id, name, ownerName, phone, email, country, city, createdAt, updatedAt, syncStatus, convexId, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        bizId, "My Business", "Owner", "", "", "Zimbabwe", "", now, now, "PENDING", null, 0
+      );
+      await database.runAsync(
+        `INSERT INTO subscriptions (id, businessId, planId, status, trialStartAt, trialEndAt, userLimit, createdAt, updatedAt, syncStatus, convexId, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        subId, bizId, "TRIAL", "TRIAL", now, trialEnd, 6, now, now, "PENDING", null, 0
+      );
+      await database.runAsync(
+        "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)",
+        "businessId", bizId
+      );
+      await database.runAsync(
+        "INSERT OR REPLACE INTO app_meta (key, value) VALUES (?, ?)",
+        "onboarded", "1"
+      );
+    }
+    await database.runAsync("PRAGMA user_version = 4");
+  }
+
+  if (user_version < 5) {
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS customers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        location TEXT NOT NULL DEFAULT '',
+        creditLimitCents INTEGER NOT NULL DEFAULT 0,
+        creditBalanceCents INTEGER NOT NULL DEFAULT 0,
+        isVip INTEGER NOT NULL DEFAULT 0,
+        notes TEXT NOT NULL DEFAULT '',
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        syncStatus TEXT NOT NULL DEFAULT 'PENDING',
+        convexId TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0,
+        lastError TEXT
+      );
+    `);
+    await database.runAsync("PRAGMA user_version = 5");
+  }
+
+  if (user_version < 6) {
+    try {
+      await database.runAsync("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''");
+    } catch {}
+    try {
+      await database.runAsync("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''");
+    } catch {}
+    try {
+      await database.runAsync("ALTER TABLE users ADD COLUMN location TEXT DEFAULT ''");
+    } catch {}
+    await database.runAsync("PRAGMA user_version = 6");
+  }
+
+  if (user_version < 7) {
+    try {
+      await database.runAsync("ALTER TABLE businesses ADD COLUMN address TEXT DEFAULT ''");
+    } catch {}
+    try {
+      await database.runAsync("ALTER TABLE businesses ADD COLUMN website TEXT DEFAULT ''");
+    } catch {}
+    try {
+      await database.runAsync("ALTER TABLE businesses ADD COLUMN taxNumber TEXT DEFAULT ''");
+    } catch {}
+    await database.runAsync("PRAGMA user_version = 7");
   }
 }

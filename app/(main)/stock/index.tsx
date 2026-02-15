@@ -1,12 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
+import { useColors } from "@/contexts/ThemeContext";
 import { listProducts } from "@/lib/data/repositories/productsRepo";
 import { createStockReceipt } from "@/lib/data/repositories/stockRepo";
 import type { Product } from "@/lib/domain/types";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { spacing, borderRadius } from "@/constants/theme";
 
 type ReceiptLine = { productId: string; name: string; quantity: number; unitCostCents: number };
 
@@ -15,6 +16,7 @@ function formatCents(c: number): string {
 }
 
 export default function StockReceivingScreen() {
+  const theme = useColors();
   const router = useRouter();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,6 +50,31 @@ export default function StockReceivingScreen() {
 
   const totalCents = lines.reduce((s, l) => s + l.quantity * l.unitCostCents, 0);
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.background },
+        content: { padding: spacing.lg, paddingTop: 48, paddingBottom: spacing.xl * 2 },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.lg },
+        label: { fontSize: 14, fontWeight: "600", color: theme.text, marginTop: spacing.md, marginBottom: spacing.xs },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, color: theme.text, backgroundColor: theme.surface, marginBottom: spacing.sm },
+        productRow: { flexDirection: "row" as const, justifyContent: "space-between", padding: spacing.sm, backgroundColor: theme.surface, borderRadius: borderRadius.sm, marginBottom: spacing.xs },
+        productName: { fontSize: 14, color: theme.text },
+        productMeta: { fontSize: 12, color: theme.textSecondary },
+        lineRow: { flexDirection: "row" as const, alignItems: "center", marginBottom: spacing.sm },
+        lineName: { flex: 1, fontSize: 14, color: theme.text },
+        qtyInput: { width: 50, borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.sm, padding: spacing.xs, marginRight: spacing.xs, color: theme.text, backgroundColor: theme.surface },
+        costInput: { width: 70, borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.sm, padding: spacing.xs, marginRight: spacing.xs, color: theme.text, backgroundColor: theme.surface },
+        removeBtn: { color: theme.error, fontSize: 18 },
+        total: { fontSize: 16, fontWeight: "700", color: theme.text, marginTop: spacing.md },
+        error: { color: theme.error, marginTop: spacing.sm },
+        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.lg },
+        buttonDisabled: { opacity: 0.6 },
+        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+      }),
+    [theme]
+  );
+
   const handleSave = async () => {
     if (!user || lines.length === 0) {
       setError("Add at least one product");
@@ -80,7 +107,7 @@ export default function StockReceivingScreen() {
         value={supplierName}
         onChangeText={setSupplierName}
         placeholder="Supplier name"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
       />
       <Text style={styles.label}>Add products</Text>
       {products.slice(0, 20).map((p) => (
@@ -123,23 +150,3 @@ export default function StockReceivingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.light.background },
-  content: { padding: spacing.lg, paddingTop: 48, paddingBottom: spacing.xl * 2 },
-  title: { fontSize: 22, fontWeight: "700", color: colors.light.text, marginBottom: spacing.lg },
-  label: { fontSize: 14, fontWeight: "600", color: colors.light.text, marginTop: spacing.md, marginBottom: spacing.xs },
-  input: { borderWidth: 1, borderColor: colors.light.border, borderRadius: borderRadius.md, padding: spacing.md, color: colors.light.text, marginBottom: spacing.sm },
-  productRow: { flexDirection: "row", justifyContent: "space-between", padding: spacing.sm, backgroundColor: colors.light.surface, borderRadius: borderRadius.sm, marginBottom: spacing.xs },
-  productName: { fontSize: 14, color: colors.light.text },
-  productMeta: { fontSize: 12, color: colors.light.textSecondary },
-  lineRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.sm },
-  lineName: { flex: 1, fontSize: 14, color: colors.light.text },
-  qtyInput: { width: 50, borderWidth: 1, borderColor: colors.light.border, borderRadius: borderRadius.sm, padding: spacing.xs, marginRight: spacing.xs, color: colors.light.text },
-  costInput: { width: 70, borderWidth: 1, borderColor: colors.light.border, borderRadius: borderRadius.sm, padding: spacing.xs, marginRight: spacing.xs, color: colors.light.text },
-  removeBtn: { color: colors.light.error, fontSize: 18 },
-  total: { fontSize: 16, fontWeight: "700", color: colors.light.text, marginTop: spacing.md },
-  error: { color: colors.light.error, marginTop: spacing.sm },
-  button: { backgroundColor: colors.light.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.lg },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: colors.light.primaryText, fontSize: 16, fontWeight: "600" },
-});

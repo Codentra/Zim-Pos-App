@@ -103,13 +103,20 @@ export async function createSale(input: {
       );
     }
 
+    const itemCount = input.items.reduce((s, i) => s + i.quantity, 0);
     await txn.runAsync(
       `INSERT INTO activity_logs (id, type, action, details, userId, managerUserId, timestamp)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       generateUUID(),
       "SALE",
-      "CREATE",
-      JSON.stringify({ transactionId, receiptNo, totalCents: totalCents }),
+      "Completed Sale",
+      JSON.stringify({
+        transactionId,
+        receiptNo,
+        totalCents,
+        itemCount,
+        paymentMethod: input.paymentMethod,
+      }),
       input.cashierUserId,
       null,
       now
@@ -213,5 +220,62 @@ export async function getTransactionItems(transactionId: string): Promise<Transa
     unitPriceCents: r.unitPriceCents,
     quantity: r.quantity,
     lineTotalCents: r.lineTotalCents,
+  }));
+}
+
+export async function getTransactionsByCustomerId(
+  customerId: string,
+  limit: number = 50
+): Promise<Transaction[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{
+    id: string;
+    receiptNo: number;
+    timestamp: number;
+    subtotalCents: number;
+    discountCents: number;
+    taxCents: number;
+    totalCents: number;
+    paymentMethod: string;
+    amountTenderedCents: number;
+    changeGivenCents: number;
+    customerId: string | null;
+    cashierUserId: string;
+    isRefund: number;
+    originalTransactionId: string | null;
+    notes: string;
+    createdAt: number;
+    updatedAt: number;
+    syncStatus: string;
+    convexId: string | null;
+    deleted: number;
+    lastError: string | null;
+  }>(
+    "SELECT * FROM transactions WHERE customerId = ? AND deleted = 0 ORDER BY timestamp DESC LIMIT ?",
+    customerId,
+    limit
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    receiptNo: r.receiptNo,
+    timestamp: r.timestamp,
+    subtotalCents: r.subtotalCents,
+    discountCents: r.discountCents,
+    taxCents: r.taxCents,
+    totalCents: r.totalCents,
+    paymentMethod: r.paymentMethod as PaymentMethod,
+    amountTenderedCents: r.amountTenderedCents,
+    changeGivenCents: r.changeGivenCents,
+    customerId: r.customerId,
+    cashierUserId: r.cashierUserId,
+    isRefund: r.isRefund,
+    originalTransactionId: r.originalTransactionId,
+    notes: r.notes,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+    syncStatus: r.syncStatus as Transaction["syncStatus"],
+    convexId: r.convexId,
+    deleted: r.deleted,
+    lastError: r.lastError,
   }));
 }

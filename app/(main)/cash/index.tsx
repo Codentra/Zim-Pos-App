@@ -1,16 +1,18 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
+import { useColors } from "@/contexts/ThemeContext";
 import { getActiveShift, openShift, closeShift } from "@/lib/data/repositories/cashRepo";
 import type { CashShift } from "@/lib/domain/types";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { spacing, borderRadius } from "@/constants/theme";
 
 function formatCents(c: number): string {
   return "$" + (c / 100).toFixed(2);
 }
 
 export default function CashManagementScreen() {
+  const theme = useColors();
   const { user } = useAuth();
   const [shift, setShift] = useState<CashShift | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,27 @@ export default function CashManagementScreen() {
   const [actualCashStr, setActualCashStr] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.background },
+        content: { padding: spacing.lg, paddingTop: 48 },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.lg },
+        loading: { padding: spacing.lg, color: theme.textSecondary },
+        card: { backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.lg, borderWidth: 1, borderColor: theme.border },
+        cardTitle: { fontSize: 16, fontWeight: "600", color: theme.text },
+        meta: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.xs },
+        label: { fontSize: 14, fontWeight: "600", color: theme.text, marginBottom: spacing.xs },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, color: theme.text, backgroundColor: theme.surface, marginBottom: spacing.md },
+        error: { color: theme.error, marginBottom: spacing.sm },
+        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
+        closeButton: { backgroundColor: theme.error },
+        buttonDisabled: { opacity: 0.6 },
+        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+      }),
+    [theme]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -92,7 +115,7 @@ export default function CashManagementScreen() {
             onChangeText={setActualCashStr}
             placeholder="0.00"
             keyboardType="decimal-pad"
-            placeholderTextColor={colors.light.textSecondary}
+            placeholderTextColor={theme.textSecondary}
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <TouchableOpacity
@@ -112,7 +135,7 @@ export default function CashManagementScreen() {
             onChangeText={setOpenFloatStr}
             placeholder="0.00"
             keyboardType="decimal-pad"
-            placeholderTextColor={colors.light.textSecondary}
+            placeholderTextColor={theme.textSecondary}
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <TouchableOpacity
@@ -128,19 +151,3 @@ export default function CashManagementScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.light.background },
-  content: { padding: spacing.lg, paddingTop: 48 },
-  title: { fontSize: 22, fontWeight: "700", color: colors.light.text, marginBottom: spacing.lg },
-  loading: { padding: spacing.lg, color: colors.light.textSecondary },
-  card: { backgroundColor: colors.light.surface, padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.light.border },
-  cardTitle: { fontSize: 16, fontWeight: "600", color: colors.light.text },
-  meta: { fontSize: 14, color: colors.light.textSecondary, marginTop: spacing.xs },
-  label: { fontSize: 14, fontWeight: "600", color: colors.light.text, marginBottom: spacing.xs },
-  input: { borderWidth: 1, borderColor: colors.light.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, color: colors.light.text, marginBottom: spacing.md },
-  error: { color: colors.light.error, marginBottom: spacing.sm },
-  button: { backgroundColor: colors.light.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
-  closeButton: { backgroundColor: colors.light.error },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: colors.light.primaryText, fontSize: 16, fontWeight: "600" },
-});

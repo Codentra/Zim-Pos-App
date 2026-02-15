@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { useState, useMemo } from "react";
+import { Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { createProduct } from "@/lib/data/repositories/productsRepo";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { useColors } from "@/contexts/ThemeContext";
+import { spacing, borderRadius } from "@/constants/theme";
 
 export default function AddProductScreen() {
+  const theme = useColors();
   const router = useRouter();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -16,6 +18,22 @@ export default function AddProductScreen() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.background },
+        content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
+        label: { fontSize: 14, fontWeight: "600", color: theme.text, marginBottom: spacing.xs, marginTop: spacing.sm },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, fontSize: 16, color: theme.text, backgroundColor: theme.surface },
+        textArea: { minHeight: 80, textAlignVertical: "top" as const },
+        error: { color: theme.error, marginTop: spacing.sm },
+        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.xl },
+        buttonDisabled: { opacity: 0.6 },
+        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+      }),
+    [theme]
+  );
 
   const handleSave = async () => {
     setError("");
@@ -59,7 +77,7 @@ export default function AddProductScreen() {
         value={name}
         onChangeText={setName}
         placeholder="Product name"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Category</Text>
@@ -68,7 +86,7 @@ export default function AddProductScreen() {
         value={category}
         onChangeText={setCategory}
         placeholder="e.g. Beverages"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>SKU</Text>
@@ -77,7 +95,7 @@ export default function AddProductScreen() {
         value={sku}
         onChangeText={setSku}
         placeholder="Stock keeping unit"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Barcode</Text>
@@ -86,7 +104,7 @@ export default function AddProductScreen() {
         value={barcode}
         onChangeText={setBarcode}
         placeholder="Barcode"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Price *</Text>
@@ -96,7 +114,7 @@ export default function AddProductScreen() {
         onChangeText={setPriceStr}
         placeholder="0.00"
         keyboardType="decimal-pad"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Stock</Text>
@@ -106,7 +124,7 @@ export default function AddProductScreen() {
         onChangeText={setStockStr}
         placeholder="0"
         keyboardType="number-pad"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Low stock alert at</Text>
@@ -116,7 +134,7 @@ export default function AddProductScreen() {
         onChangeText={setLowStockStr}
         placeholder="0"
         keyboardType="number-pad"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Description</Text>
@@ -125,7 +143,7 @@ export default function AddProductScreen() {
         value={description}
         onChangeText={setDescription}
         placeholder="Optional"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         multiline
         editable={!loading}
       />
@@ -141,53 +159,3 @@ export default function AddProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl * 2,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.light.text,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    fontSize: 16,
-    color: colors.light.text,
-    backgroundColor: colors.light.surface,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  error: {
-    color: colors.light.error,
-    marginTop: spacing.sm,
-  },
-  button: {
-    backgroundColor: colors.light.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: "center",
-    marginTop: spacing.xl,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.light.primaryText,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

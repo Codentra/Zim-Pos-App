@@ -88,8 +88,14 @@ export async function createFullRefund(input: {
       `INSERT INTO activity_logs (id, type, action, details, userId, managerUserId, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       generateUUID(),
       "REFUND",
-      "CREATE",
-      JSON.stringify({ transactionId, originalTransactionId: input.originalTransactionId }),
+      "Approved Refund",
+      JSON.stringify({
+        transactionId,
+        originalTransactionId: input.originalTransactionId,
+        receiptNo: original.receiptNo,
+        totalCents: original.totalCents,
+        itemName: originalItems[0]?.nameSnapshot,
+      }),
       input.cashierUserId,
       input.managerUserId ?? null,
       now

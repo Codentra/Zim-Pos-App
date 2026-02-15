@@ -2,6 +2,49 @@
  * Local reporting queries.
  */
 import { getDb } from "../db";
+import { getActiveShift, getCashSalesTotalSince } from "./cashRepo";
+
+export interface DashboardStats {
+  todaySalesCents: number;
+  todayTransactions: number;
+  cashInDrawerCents: number;
+  productsSoldToday: number;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const db = await getDb();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const since = startOfToday.getTime();
+
+  const [salesRow, productsRow] = await Promise.all([
+    db.getFirstAsync<{ cnt: number; total: number }>(
+      `SELECT COUNT(*) as cnt, COALESCE(SUM(totalCents), 0) as total
+       FROM transactions WHERE timestamp >= ? AND deleted = 0 AND isRefund = 0`,
+      since
+    ),
+    db.getFirstAsync<{ total: number }>(
+      `SELECT COALESCE(SUM(ti.quantity), 0) as total FROM transaction_items ti
+       JOIN transactions t ON ti.transactionId = t.id
+       WHERE t.timestamp >= ? AND t.deleted = 0 AND t.isRefund = 0`,
+      since
+    ),
+  ]);
+
+  let cashInDrawerCents = 0;
+  const shift = await getActiveShift();
+  if (shift) {
+    const cashSales = await getCashSalesTotalSince(shift.openedAt);
+    cashInDrawerCents = shift.openingFloatCents + cashSales;
+  }
+
+  return {
+    todaySalesCents: salesRow?.total ?? 0,
+    todayTransactions: salesRow?.cnt ?? 0,
+    cashInDrawerCents,
+    productsSoldToday: productsRow?.total ?? 0,
+  };
+}
 
 export interface DailySalesRow {
   date: string;

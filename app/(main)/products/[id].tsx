@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useColors } from "@/contexts/ThemeContext";
 import { getProductById, updateProduct } from "@/lib/data/repositories/productsRepo";
 import type { Product } from "@/lib/domain/types";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { spacing, borderRadius } from "@/constants/theme";
 
 export default function EditProductScreen() {
+  const theme = useColors();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -19,6 +21,24 @@ export default function EditProductScreen() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.background },
+        content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
+        loading: { color: theme.textSecondary, textAlign: "center" as const, marginTop: spacing.xl },
+        label: { fontSize: 14, fontWeight: "600", color: theme.text, marginBottom: spacing.xs, marginTop: spacing.sm },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, fontSize: 16, color: theme.text, backgroundColor: theme.surface },
+        textArea: { minHeight: 80, textAlignVertical: "top" as const },
+        error: { color: theme.error, marginTop: spacing.xl, textAlign: "center" as const },
+        errorText: { color: theme.error, marginTop: spacing.sm },
+        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.xl },
+        buttonDisabled: { opacity: 0.6 },
+        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+      }),
+    [theme]
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -95,7 +115,7 @@ export default function EditProductScreen() {
         value={name}
         onChangeText={setName}
         placeholder="Product name"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Category</Text>
@@ -104,7 +124,7 @@ export default function EditProductScreen() {
         value={category}
         onChangeText={setCategory}
         placeholder="e.g. Beverages"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>SKU</Text>
@@ -113,7 +133,7 @@ export default function EditProductScreen() {
         value={sku}
         onChangeText={setSku}
         placeholder="Stock keeping unit"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Barcode</Text>
@@ -122,7 +142,7 @@ export default function EditProductScreen() {
         value={barcode}
         onChangeText={setBarcode}
         placeholder="Barcode"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Price *</Text>
@@ -132,7 +152,7 @@ export default function EditProductScreen() {
         onChangeText={setPriceStr}
         placeholder="0.00"
         keyboardType="decimal-pad"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Stock</Text>
@@ -142,7 +162,7 @@ export default function EditProductScreen() {
         onChangeText={setStockStr}
         placeholder="0"
         keyboardType="number-pad"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Low stock alert at</Text>
@@ -152,7 +172,7 @@ export default function EditProductScreen() {
         onChangeText={setLowStockStr}
         placeholder="0"
         keyboardType="number-pad"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         editable={!loading}
       />
       <Text style={styles.label}>Description</Text>
@@ -161,7 +181,7 @@ export default function EditProductScreen() {
         value={description}
         onChangeText={setDescription}
         placeholder="Optional"
-        placeholderTextColor={colors.light.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         multiline
         editable={!loading}
       />
@@ -177,63 +197,3 @@ export default function EditProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl * 2,
-  },
-  loading: {
-    color: colors.light.textSecondary,
-    textAlign: "center",
-    marginTop: spacing.xl,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.light.text,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    fontSize: 16,
-    color: colors.light.text,
-    backgroundColor: colors.light.surface,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  error: {
-    color: colors.light.error,
-    marginTop: spacing.xl,
-    textAlign: "center",
-  },
-  errorText: {
-    color: colors.light.error,
-    marginTop: spacing.sm,
-  },
-  button: {
-    backgroundColor: colors.light.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: "center",
-    marginTop: spacing.xl,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.light.primaryText,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

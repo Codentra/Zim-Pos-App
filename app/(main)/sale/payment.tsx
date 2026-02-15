@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSale } from "@/contexts/SaleContext";
+import { useColors } from "@/contexts/ThemeContext";
 import { createSale } from "@/lib/data/repositories/salesRepo";
 import type { PaymentMethod } from "@/lib/domain/types";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { spacing, borderRadius } from "@/constants/theme";
 
 const METHODS: PaymentMethod[] = ["CASH", "ECOCASH", "ONEMONEY", "ZIPIT"];
 
@@ -14,6 +15,7 @@ function formatCents(c: number): string {
 }
 
 export default function PaymentScreen() {
+  const theme = useColors();
   const router = useRouter();
   const { user } = useAuth();
   const {
@@ -27,6 +29,28 @@ export default function PaymentScreen() {
   const [amountTenderedStr, setAmountTenderedStr] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, padding: spacing.lg, paddingTop: 48, backgroundColor: theme.background },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.sm },
+        total: { fontSize: 20, fontWeight: "600", color: theme.text, marginBottom: spacing.lg },
+        label: { fontSize: 14, fontWeight: "600", color: theme.text, marginTop: spacing.md, marginBottom: spacing.xs },
+        methodRow: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: spacing.sm },
+        methodBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, borderColor: theme.border },
+        methodBtnActive: { backgroundColor: theme.primary, borderColor: theme.primary },
+        methodBtnText: { fontSize: 14, color: theme.text },
+        methodBtnTextActive: { color: theme.primaryText },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, color: theme.text, backgroundColor: theme.surface },
+        change: { fontSize: 16, color: theme.success, marginTop: spacing.sm },
+        error: { color: theme.error, marginTop: spacing.sm },
+        confirmBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.xl },
+        confirmBtnDisabled: { opacity: 0.6 },
+        confirmBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+      }),
+    [theme]
+  );
 
   if (!user || cart.length === 0) {
     router.replace("/(main)/sale");
@@ -89,7 +113,7 @@ export default function PaymentScreen() {
             onChangeText={setAmountTenderedStr}
             placeholder="0.00"
             keyboardType="decimal-pad"
-            placeholderTextColor={colors.light.textSecondary}
+            placeholderTextColor={theme.textSecondary}
           />
           {amountTenderedCents >= totalCents && (
             <Text style={styles.change}>Change: {formatCents(changeCents)}</Text>
@@ -109,20 +133,3 @@ export default function PaymentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, paddingTop: 48, backgroundColor: colors.light.background },
-  title: { fontSize: 22, fontWeight: "700", color: colors.light.text, marginBottom: spacing.sm },
-  total: { fontSize: 20, fontWeight: "600", color: colors.light.text, marginBottom: spacing.lg },
-  label: { fontSize: 14, fontWeight: "600", color: colors.light.text, marginTop: spacing.md, marginBottom: spacing.xs },
-  methodRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  methodBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, borderColor: colors.light.border },
-  methodBtnActive: { backgroundColor: colors.light.primary, borderColor: colors.light.primary },
-  methodBtnText: { fontSize: 14, color: colors.light.text },
-  methodBtnTextActive: { color: colors.light.primaryText },
-  input: { borderWidth: 1, borderColor: colors.light.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, color: colors.light.text },
-  change: { fontSize: 16, color: colors.light.success, marginTop: spacing.sm },
-  error: { color: colors.light.error, marginTop: spacing.sm },
-  confirmBtn: { backgroundColor: colors.light.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.xl },
-  confirmBtnDisabled: { opacity: 0.6 },
-  confirmBtnText: { color: colors.light.primaryText, fontSize: 16, fontWeight: "600" },
-});

@@ -1,28 +1,32 @@
 /**
- * Theme tokens for light/dark and layout.
+ * Theme tokens. Emerald→teal gradient palette.
  */
 export const colors = {
   light: {
-    background: "#f5f5f5",
+    background: "#f0fdf4",
     surface: "#ffffff",
     text: "#1a1a1a",
-    textSecondary: "#666666",
-    primary: "#2563eb",
+    textSecondary: "#525252",
+    primary: "#0d9488",
     primaryText: "#ffffff",
-    border: "#e5e5e5",
+    border: "#bbf7d0",
     error: "#dc2626",
-    success: "#16a34a",
+    success: "#059669",
+    emerald: "#10b981",
+    teal: "#14b8a6",
   },
   dark: {
-    background: "#0f0f0f",
-    surface: "#1a1a1a",
-    text: "#f5f5f5",
-    textSecondary: "#a3a3a3",
-    primary: "#3b82f6",
+    background: "#0f172a",
+    surface: "#1e293b",
+    text: "#f1f5f9",
+    textSecondary: "#94a3b8",
+    primary: "#14b8a6",
     primaryText: "#ffffff",
-    border: "#333333",
+    border: "#334155",
     error: "#ef4444",
     success: "#22c55e",
+    emerald: "#34d399",
+    teal: "#2dd4bf",
   },
 } as const;
 

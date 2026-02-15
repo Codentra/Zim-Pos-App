@@ -1,15 +1,46 @@
+import { useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useSale } from "@/contexts/SaleContext";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { useColors } from "@/contexts/ThemeContext";
+import { spacing, borderRadius } from "@/constants/theme";
 
 function formatCents(c: number): string {
   return "$" + (c / 100).toFixed(2);
 }
 
 export default function ReceiptScreen() {
+  const theme = useColors();
   const router = useRouter();
   const { lastTransaction, setLastTransaction } = useSale();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, padding: spacing.lg, paddingTop: 48, backgroundColor: theme.background },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.md },
+        receipt: { flex: 1 },
+        receiptContent: { paddingBottom: spacing.xl },
+        businessName: { fontSize: 18, fontWeight: "700", color: theme.text, textAlign: "center" as const },
+        receiptNo: { fontSize: 14, color: theme.textSecondary, textAlign: "center" as const, marginTop: spacing.xs },
+        date: { fontSize: 12, color: theme.textSecondary, textAlign: "center" as const, marginTop: spacing.xs },
+        divider: { height: 1, backgroundColor: theme.border, marginVertical: spacing.md },
+        lineRow: { flexDirection: "row" as const, justifyContent: "space-between", marginBottom: spacing.xs },
+        lineName: { flex: 1, fontSize: 14, color: theme.text },
+        lineTotal: { fontSize: 14, color: theme.text },
+        totalRow: { flexDirection: "row" as const, justifyContent: "space-between", marginTop: spacing.sm },
+        totalLabel: { fontSize: 16, fontWeight: "700", color: theme.text },
+        totalValue: { fontSize: 16, fontWeight: "700", color: theme.text },
+        payment: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.sm },
+        change: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.xs },
+        actions: { marginTop: spacing.lg, gap: spacing.sm },
+        primaryBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
+        primaryBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        secondaryBtn: { paddingVertical: spacing.md, alignItems: "center" },
+        secondaryBtnText: { color: theme.textSecondary, fontSize: 16 },
+      }),
+    [theme]
+  );
 
   const handleDone = () => {
     setLastTransaction(null);
@@ -66,26 +97,3 @@ export default function ReceiptScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, paddingTop: 48, backgroundColor: colors.light.background },
-  title: { fontSize: 22, fontWeight: "700", color: colors.light.text, marginBottom: spacing.md },
-  receipt: { flex: 1 },
-  receiptContent: { paddingBottom: spacing.xl },
-  businessName: { fontSize: 18, fontWeight: "700", color: colors.light.text, textAlign: "center" },
-  receiptNo: { fontSize: 14, color: colors.light.textSecondary, textAlign: "center", marginTop: spacing.xs },
-  date: { fontSize: 12, color: colors.light.textSecondary, textAlign: "center", marginTop: spacing.xs },
-  divider: { height: 1, backgroundColor: colors.light.border, marginVertical: spacing.md },
-  lineRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.xs },
-  lineName: { flex: 1, fontSize: 14, color: colors.light.text },
-  lineTotal: { fontSize: 14, color: colors.light.text },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm },
-  totalLabel: { fontSize: 16, fontWeight: "700", color: colors.light.text },
-  totalValue: { fontSize: 16, fontWeight: "700", color: colors.light.text },
-  payment: { fontSize: 14, color: colors.light.textSecondary, marginTop: spacing.sm },
-  change: { fontSize: 14, color: colors.light.textSecondary, marginTop: spacing.xs },
-  actions: { marginTop: spacing.lg, gap: spacing.sm },
-  primaryBtn: { backgroundColor: colors.light.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
-  primaryBtnText: { color: colors.light.primaryText, fontSize: 16, fontWeight: "600" },
-  secondaryBtn: { paddingVertical: spacing.md, alignItems: "center" },
-  secondaryBtnText: { color: colors.light.textSecondary, fontSize: 16 },
-});
