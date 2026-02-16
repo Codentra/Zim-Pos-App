@@ -1,8 +1,8 @@
 /**
- * Subscription confirmation. Creates business, subscription, owner. Redirects to Login.
+ * Subscription confirmation. Figma: success checkmark, plan details, Next steps, Continue to Login.
  */
 import { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useBusiness } from "@/contexts/BusinessContext";
 import { createBusiness } from "@/lib/data/repositories/businessRepo";
@@ -12,6 +12,8 @@ import { DEFAULT_PIN } from "@/constants/auth";
 import { PLANS } from "@/lib/domain/types";
 import { useColors } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 export default function SubscriptionConfirmScreen() {
   const theme = useColors();
@@ -36,24 +38,46 @@ export default function SubscriptionConfirmScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1, padding: spacing.lg, backgroundColor: theme.background, justifyContent: "center" },
-        title: { fontSize: 24, fontWeight: "700", color: theme.text, marginBottom: spacing.lg, textAlign: "center" },
-        card: {
-          backgroundColor: theme.surface,
-          borderRadius: borderRadius.md,
+        container: {
+          flex: 1,
           padding: spacing.lg,
+          backgroundColor: theme.background,
+          justifyContent: "center",
+        },
+        iconWrap: {
+          width: 80,
+          height: 80,
+          borderRadius: 40,
+          backgroundColor: theme.success + "25",
+          alignItems: "center",
+          justifyContent: "center",
+          alignSelf: "center",
           marginBottom: spacing.lg,
-          borderWidth: 1,
-          borderColor: theme.border,
+        },
+        icon: { fontSize: 40 },
+        title: {
+          fontSize: 24,
+          fontWeight: "700",
+          color: theme.text,
+          marginBottom: spacing.lg,
+          textAlign: "center",
+        },
+        card: {
+          marginBottom: spacing.lg,
         },
         planName: { fontSize: 18, fontWeight: "700", color: theme.text },
         planMeta: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.xs },
         trialInfo: { fontSize: 14, color: theme.success, marginTop: spacing.sm },
-        pinInfo: { fontSize: 14, color: theme.textSecondary, textAlign: "center", marginBottom: spacing.lg },
+        nextSteps: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.md },
+        nextStepItem: { marginTop: spacing.xs },
+        pinInfo: {
+          fontSize: 14,
+          color: theme.textSecondary,
+          textAlign: "center",
+          marginBottom: spacing.lg,
+        },
         error: { color: theme.error, textAlign: "center", marginBottom: spacing.md },
-        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
-        buttonDisabled: { opacity: 0.6 },
-        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        continueBtn: { minHeight: 48 },
       }),
     [theme]
   );
@@ -78,7 +102,6 @@ export default function SubscriptionConfirmScreen() {
       }
       await createOwner(str(params.ownerName) || "Owner", DEFAULT_PIN);
       await setBusinessId(business.id);
-
       router.replace("/(auth)/login");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Setup failed");
@@ -89,34 +112,34 @@ export default function SubscriptionConfirmScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.iconWrap}>
+        <Text style={styles.icon}>✓</Text>
+      </View>
       <Text style={styles.title}>You're All Set!</Text>
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <Text style={styles.planName}>{plan.name}</Text>
         <Text style={styles.planMeta}>Up to {plan.userLimit} users</Text>
         {planId === "TRIAL" ? (
-          <Text style={styles.trialInfo}>
-            Trial ends: {trialEnd.toLocaleDateString()}
-          </Text>
+          <Text style={styles.trialInfo}>Trial ends: {trialEnd.toLocaleDateString()}</Text>
         ) : (
-          <Text style={styles.trialInfo}>
-            Active · Next billing in 30 days
-          </Text>
+          <Text style={styles.trialInfo}>Active · Next billing in 30 days</Text>
         )}
-      </View>
+        <Text style={styles.nextSteps}>Next steps:</Text>
+        <Text style={[styles.nextSteps, styles.nextStepItem]}>• Add team members</Text>
+        <Text style={[styles.nextSteps, styles.nextStepItem]}>• Set up products</Text>
+        <Text style={[styles.nextSteps, styles.nextStepItem]}>• Start selling</Text>
+      </Card>
       <Text style={styles.pinInfo}>
         Your default PIN is {DEFAULT_PIN}. You'll be asked to change it after your first login.
       </Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+      <Button
+        title={loading ? "Setting up…" : "Continue to Login"}
         onPress={handleContinue}
+        loading={loading}
         disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? "Setting up…" : "Continue to Login"}
-        </Text>
-      </TouchableOpacity>
+        style={styles.continueBtn}
+      />
     </View>
   );
 }
-

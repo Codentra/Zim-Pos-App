@@ -1,24 +1,41 @@
-import { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
+/**
+ * Backup data. Export to JSON file and share via system share sheet.
+ */
+import { useState, useMemo } from "react";
+import { Text, StyleSheet, ScrollView } from "react-native";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useColors } from "@/contexts/ThemeContext";
 import { getDb } from "@/lib/data/db";
-import { spacing, borderRadius } from "@/constants/theme";
+import { spacing } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+
+const TABLES = [
+  "businesses",
+  "products",
+  "transactions",
+  "transaction_items",
+  "customers",
+  "users",
+  "cash_shifts",
+  "activity_logs",
+];
 
 export default function BackupDataScreen() {
   const theme = useColors();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState(false);
 
   const handleExport = async () => {
     setLoading(true);
     setMessage("");
+    setError(false);
     try {
       const db = await getDb();
-      const tables = ["businesses", "products", "transactions", "transaction_items", "customers", "users", "cash_shifts", "activity_logs"];
       const data: Record<string, unknown[]> = {};
-      for (const table of tables) {
+      for (const table of TABLES) {
         try {
           const rows = await db.getAllAsync(`SELECT * FROM ${table}`);
           data[table] = rows as unknown[];
@@ -26,59 +43,74 @@ export default function BackupDataScreen() {
           data[table] = [];
         }
       }
-      setMessage("Export ready. (Full file export requires sharing API)");
+      const json = JSON.stringify(data, null, 2);
+      const filename = `zimpos-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const dir = FileSystem.documentDirectory;
+      if (!dir) {
+        setMessage("No document directory");
+        setError(true);
+        return;
+      }
+      const uri = dir + filename;
+      await FileSystem.writeAsStringAsync(uri, json, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, {
+          mimeType: "application/json",
+          dialogTitle: "Share ZimPOS backup",
+        });
+        setMessage("Backup created and share dialog opened.");
+      } else {
+        setMessage(`Backup saved to app documents: ${filename}`);
+      }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Export failed");
+      setError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.background },
-    scroll: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-    title: { fontSize: 22, fontWeight: "700" as const, color: theme.text, marginBottom: spacing.md },
-    desc: { fontSize: 14, color: theme.textSecondary, marginBottom: spacing.xl, lineHeight: 22 },
-    card: {
-      backgroundColor: theme.surface,
-      padding: spacing.lg,
-      borderRadius: borderRadius.md,
-      marginBottom: spacing.md,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    cardTitle: { fontSize: 16, fontWeight: "600" as const, color: theme.text },
-    cardDesc: { fontSize: 14, color: theme.textSecondary, marginTop: 4 },
-    btn: {
-      backgroundColor: theme.primary,
-      paddingVertical: spacing.md,
-      borderRadius: borderRadius.md,
-      alignItems: "center" as const,
-      marginTop: spacing.md,
-    },
-    btnDisabled: { opacity: 0.6 },
-    btnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" as const },
-    message: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.lg },
-  });
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.background },
+        scroll: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.md },
+        desc: { fontSize: 14, color: theme.textSecondary, marginBottom: spacing.xl, lineHeight: 22 },
+        card: { marginBottom: spacing.lg },
+        cardTitle: { fontSize: 16, fontWeight: "600", color: theme.text },
+        cardDesc: { fontSize: 14, color: theme.textSecondary, marginTop: 4 },
+        exportBtn: { marginTop: spacing.md, minHeight: 48 },
+        message: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.lg },
+        messageError: { color: theme.error },
+      }),
+    [theme]
+  );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
       <Text style={styles.title}>Backup data</Text>
       <Text style={styles.desc}>
-        Export your data for backup or restore on another device. Data is stored locally and can be exported when needed.
+        Export your data as a JSON file and share it (e.g. save to Files or drive) for backup or restore on another device.
       </Text>
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <Text style={styles.cardTitle}>Export data</Text>
-        <Text style={styles.cardDesc}>Create a backup of all your business data.</Text>
-        <TouchableOpacity
-          style={[styles.btn, loading && styles.btnDisabled]}
+        <Text style={styles.cardDesc}>Create a backup file and open the share sheet to save or send it.</Text>
+        <Button
+          title={loading ? "Exporting…" : "Export backup"}
           onPress={handleExport}
+          loading={loading}
           disabled={loading}
-        >
-          <Text style={styles.btnText}>{loading ? "Exporting…" : "Export backup"}</Text>
-        </TouchableOpacity>
-      </View>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+          style={styles.exportBtn}
+        />
+      </Card>
+      {message ? (
+        <Text style={[styles.message, error && styles.messageError]}>{message}</Text>
+      ) : null}
     </ScrollView>
   );
 }

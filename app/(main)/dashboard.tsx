@@ -86,27 +86,67 @@ export default function DashboardScreen() {
       StyleSheet.create({
         container: { flex: 1, backgroundColor: theme.background },
         content: {
-          padding: spacing.lg,
-          paddingTop: 48,
           paddingBottom: spacing.xl * 2,
         },
-        greeting: {
+        header: {
+          backgroundColor: theme.primary,
+          paddingHorizontal: spacing.lg,
+          paddingTop: 48,
+          paddingBottom: spacing.lg,
+        },
+        headerRow: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: spacing.md,
+        },
+        headerBrand: { flex: 1 },
+        headerTitle: {
           fontSize: 22,
           fontWeight: "700",
-          color: theme.text,
-          marginBottom: spacing.xs,
+          color: theme.primaryText,
+          marginBottom: 2,
         },
-        date: {
+        headerSub: {
           fontSize: 14,
-          color: theme.textSecondary,
-          marginBottom: spacing.xs,
+          color: "rgba(255,255,255,0.9)",
         },
-        role: {
-          fontSize: 13,
-          color: theme.primary,
-          fontWeight: "600",
+        settingsBtn: {
+          padding: spacing.sm,
+          minWidth: 44,
+          minHeight: 44,
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        settingsBtnText: { fontSize: 20, color: theme.primaryText },
+        statusRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.sm,
+        },
+        statusBadge: {
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.xs,
+          backgroundColor: "rgba(255,255,255,0.2)",
+          borderRadius: borderRadius.md,
+        },
+        statusBadgeText: { fontSize: 12, color: theme.primaryText, fontWeight: "500" },
+        contentInner: { padding: spacing.lg, marginTop: -spacing.md },
+        todayCard: {
+          backgroundColor: theme.surface,
+          borderRadius: borderRadius.xl,
+          padding: spacing.lg,
           marginBottom: spacing.lg,
+          borderWidth: 1,
+          borderColor: theme.border,
         },
+        todayTitle: {
+          fontSize: 18,
+          fontWeight: "600",
+          color: theme.text,
+          marginBottom: spacing.md,
+        },
+        todayDate: { fontSize: 12, color: theme.textSecondary, marginBottom: spacing.sm },
         kpiRow: {
           flexDirection: "row",
           gap: spacing.md,
@@ -116,7 +156,7 @@ export default function DashboardScreen() {
           flex: 1,
           backgroundColor: theme.surface,
           padding: spacing.md,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.lg,
           borderWidth: 1,
           borderColor: theme.border,
         },
@@ -131,28 +171,28 @@ export default function DashboardScreen() {
           marginTop: spacing.xs,
         },
         alert: {
-          backgroundColor: "#fef3c7",
+          backgroundColor: theme.warning + "20",
           padding: spacing.md,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.lg,
           marginBottom: spacing.md,
           borderWidth: 1,
-          borderColor: "#f59e0b",
+          borderColor: theme.warning,
         },
         alertTitle: {
           fontSize: 14,
           fontWeight: "600",
-          color: "#92400e",
+          color: theme.text,
         },
         alertText: {
           fontSize: 13,
-          color: "#92400e",
+          color: theme.text,
           marginTop: spacing.xs,
         },
         alertLink: { marginTop: spacing.sm },
         alertLinkText: {
           fontSize: 13,
           fontWeight: "600",
-          color: "#b45309",
+          color: theme.primary,
         },
         offlineBanner: {
           paddingVertical: spacing.sm,
@@ -165,9 +205,11 @@ export default function DashboardScreen() {
         primaryCard: {
           backgroundColor: theme.primary,
           padding: spacing.lg,
-          borderRadius: borderRadius.lg,
+          borderRadius: borderRadius.xl,
           marginBottom: spacing.lg,
           borderWidth: 0,
+          minHeight: 56,
+          justifyContent: "center",
         },
         primaryCardTitle: {
           fontSize: 20,
@@ -183,9 +225,11 @@ export default function DashboardScreen() {
         card: {
           backgroundColor: theme.surface,
           padding: spacing.lg,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.xl,
           borderWidth: 1,
           borderColor: theme.border,
+          minHeight: 44,
+          justifyContent: "center",
         },
         cardTitle: {
           fontSize: 18,
@@ -214,42 +258,64 @@ export default function DashboardScreen() {
         />
       }
     >
-      {/* Header: greeting + date */}
-      <Text style={styles.greeting}>
-        {getGreeting()}, {firstName}
-      </Text>
-      <Text style={styles.date}>{formatDate()}</Text>
-      {user ? (
-        <Text style={styles.role}>{user.role}</Text>
-      ) : null}
-
-      {/* KPI cards */}
-      <View style={styles.kpiRow}>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiValue}>
-            {loading ? "—" : formatCents(stats?.todaySalesCents ?? 0)}
-          </Text>
-          <Text style={styles.kpiLabel}>Sales today</Text>
+      {/* Figma-style header: gradient (primary) + ZimPOS + Welcome + status */}
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerBrand}>
+            <Text style={styles.headerTitle}>ZimPOS</Text>
+            <Text style={styles.headerSub}>Welcome back, {firstName}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push("/(main)/settings")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.settingsBtnText}>⚙️</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiValue}>
-            {loading ? "—" : stats?.todayTransactions ?? 0}
-          </Text>
-          <Text style={styles.kpiLabel}>Transactions</Text>
+        <View style={styles.statusRow}>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>● Offline</Text>
+          </View>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>Synced locally</Text>
+          </View>
         </View>
       </View>
-      <View style={styles.kpiRow}>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiValue}>
-            {loading ? "—" : formatCents(stats?.cashInDrawerCents ?? 0)}
-          </Text>
-          <Text style={styles.kpiLabel}>Cash in drawer</Text>
+
+      <View style={styles.contentInner}>
+      {/* Today's summary card */}
+      <View style={styles.todayCard}>
+        <Text style={styles.todayTitle}>Today's Sales</Text>
+        <Text style={styles.todayDate}>{formatDate()}</Text>
+
+        <View style={styles.kpiRow}>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiValue}>
+              {loading ? "—" : formatCents(stats?.todaySalesCents ?? 0)}
+            </Text>
+            <Text style={styles.kpiLabel}>Sales today</Text>
+          </View>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiValue}>
+              {loading ? "—" : stats?.todayTransactions ?? 0}
+            </Text>
+            <Text style={styles.kpiLabel}>Transactions</Text>
+          </View>
         </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiValue}>
-            {loading ? "—" : stats?.productsSoldToday ?? 0}
-          </Text>
-          <Text style={styles.kpiLabel}>Products sold</Text>
+        <View style={styles.kpiRow}>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiValue}>
+              {loading ? "—" : formatCents(stats?.cashInDrawerCents ?? 0)}
+            </Text>
+            <Text style={styles.kpiLabel}>Cash in drawer</Text>
+          </View>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiValue}>
+              {loading ? "—" : stats?.productsSoldToday ?? 0}
+            </Text>
+            <Text style={styles.kpiLabel}>Products sold</Text>
+          </View>
         </View>
       </View>
 
@@ -368,6 +434,7 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.footer} />
+      </View>
     </ScrollView>
   );
 }

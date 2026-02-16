@@ -1,10 +1,15 @@
+/**
+ * Security & PIN. Figma: PIN management card, current / new / confirm, Update PIN.
+ */
 import { useState, useMemo } from "react";
-import { Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/contexts/ThemeContext";
 import { updateUserPin } from "@/lib/data/repositories/authRepo";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 export default function SecurityPinScreen() {
   const theme = useColors();
@@ -20,12 +25,21 @@ export default function SecurityPinScreen() {
     () =>
       StyleSheet.create({
         container: { flex: 1, padding: spacing.lg, backgroundColor: theme.background },
-        label: { fontSize: 14, fontWeight: "600" as const, color: theme.text, marginTop: spacing.md, marginBottom: spacing.xs },
-        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, textAlign: "center" as const, color: theme.text, backgroundColor: theme.surface },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.md },
+        card: { marginBottom: spacing.lg },
+        label: { fontSize: 14, fontWeight: "600", color: theme.text, marginTop: spacing.md, marginBottom: spacing.xs },
+        input: {
+          borderWidth: 1,
+          borderColor: theme.border,
+          borderRadius: borderRadius.lg,
+          padding: spacing.md,
+          fontSize: 18,
+          textAlign: "center",
+          color: theme.text,
+          backgroundColor: theme.inputBackground,
+        },
         error: { color: theme.error, marginTop: spacing.md },
-        saveBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" as const, marginTop: spacing.xl },
-        saveBtnDisabled: { opacity: 0.6 },
-        saveBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" as const },
+        saveBtn: { marginTop: spacing.xl, minHeight: 48 },
       }),
     [theme]
   );
@@ -61,44 +75,50 @@ export default function SecurityPinScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Text style={styles.label}>Current PIN</Text>
-      <TextInput
-        style={styles.input}
-        value={currentPin}
-        onChangeText={setCurrentPin}
-        placeholder="••••"
-        placeholderTextColor={theme.textSecondary}
-        keyboardType="number-pad"
-        secureTextEntry
-        maxLength={8}
-      />
-      <Text style={styles.label}>New PIN</Text>
-      <TextInput
-        style={styles.input}
-        value={newPin}
-        onChangeText={setNewPin}
-        placeholder="••••"
-        placeholderTextColor={theme.textSecondary}
-        keyboardType="number-pad"
-        secureTextEntry
-        maxLength={8}
-      />
-      <Text style={styles.label}>Confirm new PIN</Text>
-      <TextInput
-        style={styles.input}
-        value={confirmPin}
-        onChangeText={setConfirmPin}
-        placeholder="••••"
-        placeholderTextColor={theme.textSecondary}
-        keyboardType="number-pad"
-        secureTextEntry
-        maxLength={8}
-      />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TouchableOpacity style={[styles.saveBtn, loading && styles.saveBtnDisabled]} onPress={handleSave} disabled={loading}>
-        <Text style={styles.saveBtnText}>{loading ? "Updating…" : "Update PIN"}</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>Security & PIN</Text>
+      <Card style={styles.card}>
+        <Text style={styles.label}>Current PIN</Text>
+        <TextInput
+          style={styles.input}
+          value={currentPin}
+          onChangeText={setCurrentPin}
+          placeholder="••••"
+          placeholderTextColor={theme.textSecondary}
+          keyboardType="number-pad"
+          secureTextEntry
+          maxLength={8}
+        />
+        <Text style={styles.label}>New PIN</Text>
+        <TextInput
+          style={styles.input}
+          value={newPin}
+          onChangeText={setNewPin}
+          placeholder="••••"
+          placeholderTextColor={theme.textSecondary}
+          keyboardType="number-pad"
+          secureTextEntry
+          maxLength={8}
+        />
+        <Text style={styles.label}>Confirm new PIN</Text>
+        <TextInput
+          style={styles.input}
+          value={confirmPin}
+          onChangeText={setConfirmPin}
+          placeholder="••••"
+          placeholderTextColor={theme.textSecondary}
+          keyboardType="number-pad"
+          secureTextEntry
+          maxLength={8}
+        />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <Button
+          title={loading ? "Updating…" : "Update PIN"}
+          onPress={handleSave}
+          loading={loading}
+          disabled={loading}
+          style={styles.saveBtn}
+        />
+      </Card>
     </KeyboardAvoidingView>
   );
 }
-

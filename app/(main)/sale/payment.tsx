@@ -45,7 +45,7 @@ export default function PaymentScreen() {
         input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, color: theme.text, backgroundColor: theme.surface },
         change: { fontSize: 16, color: theme.success, marginTop: spacing.sm },
         error: { color: theme.error, marginTop: spacing.sm },
-        confirmBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.xl },
+        confirmBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.xl, alignItems: "center", marginTop: spacing.xl, minHeight: 48 },
         confirmBtnDisabled: { opacity: 0.6 },
         confirmBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
       }),

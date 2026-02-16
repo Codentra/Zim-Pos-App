@@ -265,4 +265,18 @@ export async function runMigrations(database: SQLite.SQLiteDatabase): Promise<vo
     } catch {}
     await database.runAsync("PRAGMA user_version = 7");
   }
+
+  if (user_version < 8) {
+    try {
+      await database.runAsync("ALTER TABLE activity_logs ADD COLUMN syncStatus TEXT NOT NULL DEFAULT 'PENDING'");
+    } catch {}
+    await database.runAsync("PRAGMA user_version = 8");
+  }
+
+  if (user_version < 9) {
+    try {
+      await database.runAsync("ALTER TABLE users ADD COLUMN pinSalt TEXT");
+    } catch {}
+    await database.runAsync("PRAGMA user_version = 9");
+  }
 }

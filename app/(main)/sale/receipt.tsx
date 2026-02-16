@@ -34,7 +34,7 @@ export default function ReceiptScreen() {
         payment: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.sm },
         change: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.xs },
         actions: { marginTop: spacing.lg, gap: spacing.sm },
-        primaryBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
+        primaryBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.xl, alignItems: "center", minHeight: 48, justifyContent: "center" },
         primaryBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
         secondaryBtn: { paddingVertical: spacing.md, alignItems: "center" },
         secondaryBtnText: { color: theme.textSecondary, fontSize: 16 },

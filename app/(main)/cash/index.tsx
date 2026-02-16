@@ -1,11 +1,13 @@
 import { useCallback, useState, useMemo } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColors } from "@/contexts/ThemeContext";
 import { getActiveShift, openShift, closeShift } from "@/lib/data/repositories/cashRepo";
 import type { CashShift } from "@/lib/domain/types";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 function formatCents(c: number): string {
   return "$" + (c / 100).toFixed(2);
@@ -28,16 +30,13 @@ export default function CashManagementScreen() {
         content: { padding: spacing.lg, paddingTop: 48 },
         title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.lg },
         loading: { padding: spacing.lg, color: theme.textSecondary },
-        card: { backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.lg, borderWidth: 1, borderColor: theme.border },
+        card: { marginBottom: spacing.lg },
         cardTitle: { fontSize: 16, fontWeight: "600", color: theme.text },
         meta: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.xs },
         label: { fontSize: 14, fontWeight: "600", color: theme.text, marginBottom: spacing.xs },
-        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, fontSize: 18, color: theme.text, backgroundColor: theme.surface, marginBottom: spacing.md },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.lg, padding: spacing.md, fontSize: 18, color: theme.text, backgroundColor: theme.inputBackground, marginBottom: spacing.md },
         error: { color: theme.error, marginBottom: spacing.sm },
-        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" },
-        closeButton: { backgroundColor: theme.error },
-        buttonDisabled: { opacity: 0.6 },
-        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        actionBtn: { marginTop: spacing.md, minHeight: 48 },
       }),
     [theme]
   );
@@ -103,11 +102,11 @@ export default function CashManagementScreen() {
       <Text style={styles.title}>Cash Management</Text>
       {shift ? (
         <>
-          <View style={styles.card}>
+          <Card style={styles.card}>
             <Text style={styles.cardTitle}>Shift open</Text>
             <Text style={styles.meta}>Opened {new Date(shift.openedAt).toLocaleString()}</Text>
             <Text style={styles.meta}>Opening float: {formatCents(shift.openingFloatCents)}</Text>
-          </View>
+          </Card>
           <Text style={styles.label}>Actual cash count to close</Text>
           <TextInput
             style={styles.input}
@@ -118,13 +117,14 @@ export default function CashManagementScreen() {
             placeholderTextColor={theme.textSecondary}
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity
-            style={[styles.button, styles.closeButton, actionLoading && styles.buttonDisabled]}
+          <Button
+            title={actionLoading ? "Closing…" : "Close shift"}
             onPress={handleCloseShift}
+            loading={actionLoading}
             disabled={actionLoading}
-          >
-            <Text style={styles.buttonText}>{actionLoading ? "Closing…" : "Close shift"}</Text>
-          </TouchableOpacity>
+            variant="destructive"
+            style={styles.actionBtn}
+          />
         </>
       ) : (
         <>
@@ -138,13 +138,13 @@ export default function CashManagementScreen() {
             placeholderTextColor={theme.textSecondary}
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity
-            style={[styles.button, actionLoading && styles.buttonDisabled]}
+          <Button
+            title={actionLoading ? "Opening…" : "Open shift"}
             onPress={handleOpenShift}
+            loading={actionLoading}
             disabled={actionLoading}
-          >
-            <Text style={styles.buttonText}>{actionLoading ? "Opening…" : "Open shift"}</Text>
-          </TouchableOpacity>
+            style={styles.actionBtn}
+          />
         </>
       )}
     </ScrollView>

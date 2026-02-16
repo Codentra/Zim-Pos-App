@@ -1,11 +1,114 @@
 /**
- * Convex mutations for ZimPOS sync. Idempotent upserts by stable id (UUID).
+ * Convex mutations for ZimPOS sync. Multi-tenant, idempotent upserts by stable id (UUID) per business.
+ * PINs and payment tokens are never sent; only operational data.
+ * When CONVEX_SYNC_KEY is set in Convex env, callers must pass matching syncKey or requests are rejected.
  */
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 
+function requireSyncKey(args: { syncKey?: string }): void {
+  const envKey = process.env.CONVEX_SYNC_KEY;
+  if (!envKey) return;
+  if (args.syncKey !== envKey) throw new Error("Unauthorized: invalid sync key");
+}
+
+export const upsertBusiness = mutation({
+  args: {
+    syncKey: v.optional(v.string()),
+    id: v.string(),
+    name: v.string(),
+    ownerName: v.string(),
+    phone: v.string(),
+    email: v.string(),
+    country: v.string(),
+    city: v.string(),
+    address: v.optional(v.string()),
+    website: v.optional(v.string()),
+    taxNumber: v.optional(v.string()),
+    updatedAt: v.number(),
+    deleted: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("businesses").withIndex("by_stable_id", (q) => q.eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("businesses", doc);
+  },
+});
+
+export const upsertUser = mutation({
+  args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
+    id: v.string(),
+    name: v.string(),
+    role: v.string(),
+    updatedAt: v.number(),
+    deleted: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("users").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("users", doc);
+  },
+});
+
+export const upsertCustomer = mutation({
+  args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
+    id: v.string(),
+    name: v.string(),
+    phone: v.string(),
+    email: v.string(),
+    location: v.string(),
+    creditLimitCents: v.number(),
+    creditBalanceCents: v.number(),
+    isVip: v.number(),
+    notes: v.string(),
+    updatedAt: v.number(),
+    deleted: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("customers").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("customers", doc);
+  },
+});
+
+export const upsertSubscription = mutation({
+  args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
+    id: v.string(),
+    planId: v.string(),
+    status: v.string(),
+    trialStartAt: v.optional(v.number()),
+    trialEndAt: v.optional(v.number()),
+    currentPeriodStart: v.optional(v.number()),
+    currentPeriodEnd: v.optional(v.number()),
+    userLimit: v.number(),
+    updatedAt: v.number(),
+    deleted: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("subscriptions").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("subscriptions", doc);
+  },
+});
+
 export const upsertProduct = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     name: v.string(),
     category: v.string(),
@@ -20,24 +123,9 @@ export const upsertProduct = mutation({
     deleted: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("products")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    const doc = {
-      id: args.id,
-      name: args.name,
-      category: args.category,
-      sku: args.sku,
-      barcode: args.barcode,
-      priceCents: args.priceCents,
-      costCents: args.costCents,
-      stock: args.stock,
-      lowStockThreshold: args.lowStockThreshold,
-      description: args.description,
-      updatedAt: args.updatedAt,
-      ...(args.deleted !== undefined && { deleted: args.deleted }),
-    };
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("products").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
     if (existing) await ctx.db.patch(existing._id, doc);
     else await ctx.db.insert("products", doc);
   },
@@ -45,6 +133,8 @@ export const upsertProduct = mutation({
 
 export const upsertTransaction = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     receiptNo: v.number(),
     timestamp: v.number(),
@@ -64,11 +154,9 @@ export const upsertTransaction = mutation({
     deleted: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("transactions")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    const doc = { ...args };
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("transactions").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
     if (existing) await ctx.db.patch(existing._id, doc);
     else await ctx.db.insert("transactions", doc);
   },
@@ -76,6 +164,8 @@ export const upsertTransaction = mutation({
 
 export const upsertTransactionItem = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     transactionId: v.string(),
     productId: v.string(),
@@ -85,17 +175,18 @@ export const upsertTransactionItem = mutation({
     lineTotalCents: v.number(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("transaction_items")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    if (existing) await ctx.db.patch(existing._id, args);
-    else await ctx.db.insert("transaction_items", args);
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("transaction_items").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("transaction_items", doc);
   },
 });
 
 export const upsertCashShift = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     openedAt: v.number(),
     closedAt: v.optional(v.number()),
@@ -111,17 +202,18 @@ export const upsertCashShift = mutation({
     deleted: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("cash_shifts")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    if (existing) await ctx.db.patch(existing._id, args);
-    else await ctx.db.insert("cash_shifts", args);
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("cash_shifts").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("cash_shifts", doc);
   },
 });
 
 export const upsertActivityLog = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     type: v.string(),
     action: v.string(),
@@ -131,17 +223,18 @@ export const upsertActivityLog = mutation({
     timestamp: v.number(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("activity_logs")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    if (existing) await ctx.db.patch(existing._id, args);
-    else await ctx.db.insert("activity_logs", args);
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("activity_logs").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("activity_logs", doc);
   },
 });
 
 export const upsertStockReceipt = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     receivedAt: v.number(),
     supplierName: v.string(),
@@ -152,17 +245,18 @@ export const upsertStockReceipt = mutation({
     deleted: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("stock_receipts")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    if (existing) await ctx.db.patch(existing._id, args);
-    else await ctx.db.insert("stock_receipts", args);
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("stock_receipts").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("stock_receipts", doc);
   },
 });
 
 export const upsertStockReceiptItem = mutation({
   args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
     id: v.string(),
     stockReceiptId: v.string(),
     productId: v.string(),
@@ -171,11 +265,26 @@ export const upsertStockReceiptItem = mutation({
     lineTotalCents: v.number(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("stock_receipt_items")
-      .withIndex("by_stable_id", (q) => q.eq("id", args.id))
-      .first();
-    if (existing) await ctx.db.patch(existing._id, args);
-    else await ctx.db.insert("stock_receipt_items", args);
+    requireSyncKey(args);
+    const { syncKey: _sk, ...doc } = args;
+    const existing = await ctx.db.query("stock_receipt_items").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId).eq("id", args.id)).first();
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("stock_receipt_items", doc);
+  },
+});
+
+/** Record last successful sync time for this business (for admin monitoring). */
+export const recordSyncHealth = mutation({
+  args: {
+    syncKey: v.optional(v.string()),
+    businessId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    requireSyncKey(args);
+    const now = Date.now();
+    const existing = await ctx.db.query("business_sync").withIndex("by_business_id", (q) => q.eq("businessId", args.businessId)).first();
+    const doc = { businessId: args.businessId, lastSyncAt: now, updatedAt: now };
+    if (existing) await ctx.db.patch(existing._id, doc);
+    else await ctx.db.insert("business_sync", doc);
   },
 });

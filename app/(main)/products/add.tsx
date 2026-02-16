@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
-import { Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { Text, TextInput, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { createProduct } from "@/lib/data/repositories/productsRepo";
 import { useColors } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 export default function AddProductScreen() {
   const theme = useColors();
@@ -25,12 +27,10 @@ export default function AddProductScreen() {
         container: { flex: 1, backgroundColor: theme.background },
         content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
         label: { fontSize: 14, fontWeight: "600", color: theme.text, marginBottom: spacing.xs, marginTop: spacing.sm },
-        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, fontSize: 16, color: theme.text, backgroundColor: theme.surface },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, fontSize: 16, color: theme.text, backgroundColor: theme.inputBackground },
         textArea: { minHeight: 80, textAlignVertical: "top" as const },
         error: { color: theme.error, marginTop: spacing.sm },
-        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.xl },
-        buttonDisabled: { opacity: 0.6 },
-        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        saveBtn: { marginTop: spacing.xl, minHeight: 48 },
       }),
     [theme]
   );
@@ -148,13 +148,13 @@ export default function AddProductScreen() {
         editable={!loading}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+      <Button
+        title={loading ? "Saving…" : "Save product"}
         onPress={handleSave}
+        loading={loading}
         disabled={loading}
-      >
-        <Text style={styles.buttonText}>{loading ? "Saving…" : "Save product"}</Text>
-      </TouchableOpacity>
+        style={styles.saveBtn}
+      />
     </ScrollView>
   );
 }

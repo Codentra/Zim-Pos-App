@@ -1,36 +1,75 @@
-import { useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+/**
+ * Sync status. Figma: last sync, pending count, Sync now, connection indicator.
+ */
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useColors } from "@/contexts/ThemeContext";
-import { spacing } from "@/constants/theme";
+import { useBusiness } from "@/contexts/BusinessContext";
+import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { getPendingCount, isConvexConfigured } from "@/lib/sync/syncService";
 
 export default function SyncStatusScreen() {
   const theme = useColors();
+  const router = useRouter();
+  const { businessId } = useBusiness();
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const load = useCallback(async () => {
+    const count = await getPendingCount();
+    setPendingCount(count);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const configured = isConvexConfigured();
+  const statusLabel = configured ? (pendingCount !== null && pendingCount > 0 ? "Pending sync" : "Up to date") : "Offline";
+  const statusColor = configured ? (pendingCount === 0 ? theme.success : theme.warning) : theme.textSecondary;
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { flex: 1, padding: spacing.lg, backgroundColor: theme.background },
-        card: { backgroundColor: theme.surface, padding: spacing.lg, borderRadius: 10, borderWidth: 1, borderColor: theme.border },
-        title: { fontSize: 18, fontWeight: "700" as const, color: theme.text },
+        container: { flex: 1, backgroundColor: theme.background },
+        scroll: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
+        title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.md },
+        card: { marginBottom: spacing.lg },
+        cardTitle: { fontSize: 18, fontWeight: "600", color: theme.text },
         status: { fontSize: 16, color: theme.textSecondary, marginTop: spacing.sm },
         subtitle: { fontSize: 14, color: theme.textSecondary, marginTop: spacing.xs },
-        btn: { marginTop: spacing.lg, padding: spacing.md, backgroundColor: theme.primary, borderRadius: 10, alignItems: "center" as const },
-        btnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" as const },
+        syncBtn: { marginTop: spacing.lg, minHeight: 48 },
       }),
     [theme]
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Sync status</Text>
-        <Text style={styles.status}>● Offline</Text>
-        <Text style={styles.subtitle}>Data is saved locally. Sync when online.</Text>
-        <TouchableOpacity style={styles.btn}>
-          <Text style={styles.btnText}>Sync when online</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+      <Text style={styles.title}>Sync status</Text>
+      <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Cloud sync</Text>
+        <Text style={[styles.status, { color: statusColor }]}>● {statusLabel}</Text>
+        <Text style={styles.subtitle}>
+          {configured
+            ? pendingCount !== null && pendingCount > 0
+              ? `${pendingCount} item(s) pending upload. Data is saved locally.`
+              : "Data is saved locally and synced when online."
+            : "Set EXPO_PUBLIC_CONVEX_URL to enable sync. Data is saved locally."}
+        </Text>
+        <Button
+          title={syncing ? "Syncing…" : "Sync when online"}
+          onPress={() => {
+            setSyncing(true);
+            load().finally(() => setSyncing(false));
+          }}
+          loading={syncing}
+          disabled={!configured || !businessId}
+          style={styles.syncBtn}
+        />
+      </Card>
+    </ScrollView>
   );
 }
-

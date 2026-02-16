@@ -28,7 +28,7 @@ export default function NewSaleScreen() {
         title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.md },
         loading: { color: theme.textSecondary, marginTop: spacing.lg },
         row: { gap: spacing.sm, marginBottom: spacing.sm },
-        productCard: { flex: 1, backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, borderColor: theme.border },
+        productCard: { flex: 1, backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: theme.border },
         productCardDisabled: { opacity: 0.5 },
         productName: { fontSize: 14, fontWeight: "600", color: theme.text },
         productPrice: { fontSize: 16, color: theme.primary, marginTop: spacing.xs },
@@ -39,7 +39,7 @@ export default function NewSaleScreen() {
         cartSubtotal: { fontSize: 14, color: theme.text },
         cartTotalLabel: { fontSize: 16, fontWeight: "600", color: theme.text },
         cartTotal: { fontSize: 18, fontWeight: "700", color: theme.text },
-        checkoutBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.sm },
+        checkoutBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.xl, alignItems: "center", marginTop: spacing.sm, minHeight: 48 },
         checkoutBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
       }),
     [theme]

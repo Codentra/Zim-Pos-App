@@ -32,7 +32,7 @@ export default function ReportsScreen() {
         title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.lg },
         loading: { padding: spacing.lg, color: theme.textSecondary },
         sectionTitle: { fontSize: 16, fontWeight: "600", color: theme.text, marginTop: spacing.lg, marginBottom: spacing.sm },
-        card: { backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, borderColor: theme.border },
+        card: { backgroundColor: theme.surface, padding: spacing.lg, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: theme.border, marginBottom: spacing.md },
         row: { flexDirection: "row" as const, justifyContent: "space-between", alignItems: "center", paddingVertical: spacing.xs },
         rowLabel: { fontSize: 14, color: theme.text, flex: 1 },
         rowValue: { fontSize: 14, color: theme.textSecondary },

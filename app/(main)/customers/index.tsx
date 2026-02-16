@@ -18,6 +18,7 @@ import {
 } from "@/lib/data/repositories/customersRepo";
 import type { Customer } from "@/lib/domain/types";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Button } from "@/components/ui/Button";
 
 function formatCents(cents: number): string {
   return "$" + (cents / 100).toFixed(2);
@@ -77,7 +78,7 @@ export default function CustomersScreen() {
       StyleSheet.create({
         container: { flex: 1, padding: spacing.lg, backgroundColor: theme.background },
         statsRow: { flexDirection: "row" as const, gap: spacing.sm, marginBottom: spacing.md },
-        statBox: { flex: 1, backgroundColor: theme.surface, padding: spacing.sm, borderRadius: borderRadius.md, alignItems: "center" as const, borderWidth: 1, borderColor: theme.border },
+        statBox: { flex: 1, backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.xl, alignItems: "center" as const, borderWidth: 1, borderColor: theme.border },
         statValue: { fontSize: 14, fontWeight: "700" as const, color: theme.text },
         statLabel: { fontSize: 11, color: theme.textSecondary, marginTop: 2 },
         search: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.md, backgroundColor: theme.surface, fontSize: 16, color: theme.text },
@@ -86,12 +87,11 @@ export default function CustomersScreen() {
         tabActive: { backgroundColor: theme.primary, borderColor: theme.primary },
         tabText: { fontSize: 14, color: theme.text },
         tabTextActive: { color: theme.primaryText },
-        addBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center" as const, marginBottom: spacing.md },
-        addBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" as const },
+        addBtn: { marginBottom: spacing.md, minHeight: 48 },
         loading: { color: theme.textSecondary, textAlign: "center" as const, marginTop: spacing.lg },
         empty: { color: theme.textSecondary, textAlign: "center" as const, marginTop: spacing.lg },
         list: { paddingBottom: spacing.xl * 2 },
-        card: { backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: theme.border },
+        card: { backgroundColor: theme.surface, padding: spacing.lg, borderRadius: borderRadius.xl, marginBottom: spacing.sm, borderWidth: 1, borderColor: theme.border },
         cardHeader: { flexDirection: "row" as const, alignItems: "center", gap: spacing.sm },
         name: { fontSize: 16, fontWeight: "600" as const, color: theme.text },
         vipBadge: { fontSize: 11, fontWeight: "600" as const, color: theme.primary, backgroundColor: `${theme.primary}20`, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
@@ -160,12 +160,11 @@ export default function CustomersScreen() {
         ))}
       </View>
 
-      <TouchableOpacity
-        style={styles.addBtn}
+      <Button
+        title="+ Add customer"
         onPress={() => router.push("/(main)/customers/add")}
-      >
-        <Text style={styles.addBtnText}>+ Add customer</Text>
-      </TouchableOpacity>
+        style={styles.addBtn}
+      />
 
       {loading ? (
         <Text style={styles.loading}>Loading…</Text>

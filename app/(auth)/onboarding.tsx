@@ -1,5 +1,5 @@
 /**
- * Onboarding wizard. Add product, payment methods, opening cash, finish.
+ * Onboarding wizard. Figma: 4 steps, progress, payment method cards, opening cash, finish.
  */
 import { useState, useMemo } from "react";
 import {
@@ -21,8 +21,11 @@ import { openShift } from "@/lib/data/repositories/cashRepo";
 import { getDb } from "@/lib/data/db";
 import type { PaymentMethod } from "@/lib/domain/types";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 const PAYMENT_METHODS: PaymentMethod[] = ["CASH", "ECOCASH", "ONEMONEY", "ZIPIT"];
+const QUICK_AMOUNTS = [20, 50, 100, 200];
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -46,8 +49,14 @@ export default function OnboardingScreen() {
     () =>
       StyleSheet.create({
         container: { flex: 1, backgroundColor: theme.background },
-        progress: { flexDirection: "row", justifyContent: "center", gap: spacing.sm, paddingTop: spacing.lg, paddingBottom: spacing.md },
-        dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.border },
+        progress: {
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: spacing.sm,
+          paddingTop: spacing.lg,
+          paddingBottom: spacing.md,
+        },
+        dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.muted },
         dotActive: { backgroundColor: theme.primary },
         scroll: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
         title: { fontSize: 24, fontWeight: "700", color: theme.text, marginBottom: spacing.xs },
@@ -56,36 +65,36 @@ export default function OnboardingScreen() {
         input: {
           borderWidth: 1,
           borderColor: theme.border,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.lg,
           padding: spacing.md,
           fontSize: 16,
           color: theme.text,
-          backgroundColor: theme.surface,
+          backgroundColor: theme.inputBackground,
         },
         methodCard: {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: spacing.md,
+          padding: spacing.lg,
           backgroundColor: theme.surface,
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.xl,
           marginBottom: spacing.sm,
           borderWidth: 2,
           borderColor: theme.border,
         },
-        methodCardSelected: { borderColor: theme.primary },
+        methodCardSelected: { borderColor: theme.primary, backgroundColor: theme.primary + "10" },
         methodText: { fontSize: 16, fontWeight: "600", color: theme.text },
-        check: { fontSize: 18, color: theme.primary },
-        error: { color: theme.error, marginTop: spacing.md },
-        button: {
-          backgroundColor: theme.primary,
-          paddingVertical: spacing.md,
-          borderRadius: borderRadius.md,
-          alignItems: "center",
-          marginTop: spacing.xl,
+        check: { fontSize: 18, color: theme.primary, fontWeight: "700" },
+        quickRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm },
+        quickBtn: {
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+          backgroundColor: theme.muted,
+          borderRadius: borderRadius.lg,
         },
-        buttonDisabled: { opacity: 0.6 },
-        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        quickBtnText: { fontSize: 14, fontWeight: "600", color: theme.text },
+        error: { color: theme.error, marginTop: spacing.md },
+        nextBtn: { marginTop: spacing.xl, minHeight: 48 },
       }),
     [theme]
   );
@@ -187,21 +196,15 @@ export default function OnboardingScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.progress}>
-        {[1, 2, 3, 4].map((s) => (
-          <View
-            key={s}
-            style={[
-              styles.dot,
-              step >= s && styles.dotActive,
-            ]}
-          />
+        {([1, 2, 3, 4] as const).map((s) => (
+          <View key={s} style={[styles.dot, step >= s && styles.dotActive]} />
         ))}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {step === 1 && (
-          <>
-            <Text style={styles.title}>Add Your First Product</Text>
+          <Card style={{ marginBottom: 0 }}>
+            <Text style={styles.title}>Add your first product</Text>
             <Text style={styles.subtitle}>Quick setup to get you selling.</Text>
             <Text style={styles.label}>Product name</Text>
             <TextInput
@@ -230,42 +233,39 @@ export default function OnboardingScreen() {
               keyboardType="number-pad"
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+            <Button
+              title="Next: Payment methods"
               onPress={handleStep1}
+              loading={loading}
               disabled={loading}
-            >
-              <Text style={styles.buttonText}>Next: Payment Methods</Text>
-            </TouchableOpacity>
-          </>
+              style={styles.nextBtn}
+            />
+          </Card>
         )}
 
         {step === 2 && (
           <>
-            <Text style={styles.title}>Payment Methods</Text>
+            <Text style={styles.title}>Payment methods</Text>
             <Text style={styles.subtitle}>Select the methods you accept.</Text>
             {PAYMENT_METHODS.map((m) => (
               <TouchableOpacity
                 key={m}
                 style={[styles.methodCard, selectedMethods.has(m) && styles.methodCardSelected]}
                 onPress={() => toggleMethod(m)}
+                activeOpacity={0.8}
               >
                 <Text style={styles.methodText}>{m}</Text>
-                {selectedMethods.has(m) ? (
-                  <Text style={styles.check}>✓</Text>
-                ) : null}
+                {selectedMethods.has(m) ? <Text style={styles.check}>✓</Text> : null}
               </TouchableOpacity>
             ))}
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <TouchableOpacity style={styles.button} onPress={handleStep2}>
-              <Text style={styles.buttonText}>Next: Opening Cash</Text>
-            </TouchableOpacity>
+            <Button title="Next: Opening cash" onPress={handleStep2} style={styles.nextBtn} />
           </>
         )}
 
         {step === 3 && (
-          <>
-            <Text style={styles.title}>Opening Cash Balance</Text>
+          <Card style={{ marginBottom: 0 }}>
+            <Text style={styles.title}>Opening cash balance</Text>
             <Text style={styles.subtitle}>Optional. Amount in register at start of day.</Text>
             <TextInput
               style={styles.input}
@@ -275,34 +275,46 @@ export default function OnboardingScreen() {
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
             />
+            <View style={styles.quickRow}>
+              {QUICK_AMOUNTS.map((a) => (
+                <TouchableOpacity
+                  key={a}
+                  style={styles.quickBtn}
+                  onPress={() => setOpeningCash(String(a))}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.quickBtnText}>${a}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+            <Button
+              title="Next"
               onPress={handleStep3}
+              loading={loading}
               disabled={loading}
-            >
-              <Text style={styles.buttonText}>Next</Text>
-            </TouchableOpacity>
-          </>
+              style={styles.nextBtn}
+            />
+          </Card>
         )}
 
         {step === 4 && (
           <>
-            <Text style={styles.title}>You're Ready!</Text>
-            <Text style={styles.subtitle}>Your POS is set up. Start selling.</Text>
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+            <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
+              <Text style={{ fontSize: 48, marginBottom: spacing.sm }}>🎉</Text>
+              <Text style={styles.title}>You're ready!</Text>
+              <Text style={styles.subtitle}>Your POS is set up. Start selling.</Text>
+            </View>
+            <Button
+              title={loading ? "Finishing…" : "Go to Dashboard"}
               onPress={handleFinish}
+              loading={loading}
               disabled={loading}
-            >
-              <Text style={styles.buttonText}>
-                {loading ? "Finishing…" : "Go to Dashboard"}
-              </Text>
-            </TouchableOpacity>
+              style={styles.nextBtn}
+            />
           </>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-

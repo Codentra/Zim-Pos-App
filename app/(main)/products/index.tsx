@@ -6,6 +6,7 @@ import { listProducts } from "@/lib/data/repositories/productsRepo";
 import type { Product } from "@/lib/domain/types";
 import { useColors } from "@/contexts/ThemeContext";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Button } from "@/components/ui/Button";
 
 function formatCents(cents: number): string {
   return "$" + (cents / 100).toFixed(2);
@@ -21,12 +22,11 @@ export default function ProductsScreen() {
     () =>
       StyleSheet.create({
         container: { flex: 1, padding: spacing.lg, backgroundColor: theme.background },
-        addButton: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginBottom: spacing.lg },
-        addButtonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        addButton: { marginBottom: spacing.lg, minHeight: 48 },
         loading: { color: theme.textSecondary, textAlign: "center", marginTop: spacing.xl },
         empty: { color: theme.textSecondary, textAlign: "center", marginTop: spacing.xl },
         list: { paddingBottom: spacing.xl },
-        row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: theme.surface, padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: theme.border },
+        row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: theme.surface, padding: spacing.lg, borderRadius: borderRadius.xl, marginBottom: spacing.sm, borderWidth: 1, borderColor: theme.border },
         rowLeft: { flex: 1 },
         name: { fontSize: 16, fontWeight: "600", color: theme.text },
         meta: { fontSize: 13, color: theme.textSecondary, marginTop: spacing.xs },
@@ -66,9 +66,7 @@ export default function ProductsScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.addButton} onPress={() => router.push("/(main)/products/add")}>
-        <Text style={styles.addButtonText}>+ Add product</Text>
-      </TouchableOpacity>
+      <Button title="+ Add product" onPress={() => router.push("/(main)/products/add")} style={styles.addButton} />
       {loading ? (
         <Text style={styles.loading}>Loading…</Text>
       ) : products.length === 0 ? (

@@ -8,6 +8,8 @@ import { listProducts } from "@/lib/data/repositories/productsRepo";
 import { createStockReceipt } from "@/lib/data/repositories/stockRepo";
 import type { Product } from "@/lib/domain/types";
 import { spacing, borderRadius } from "@/constants/theme";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 type ReceiptLine = { productId: string; name: string; quantity: number; unitCostCents: number };
 
@@ -57,8 +59,8 @@ export default function StockReceivingScreen() {
         content: { padding: spacing.lg, paddingTop: 48, paddingBottom: spacing.xl * 2 },
         title: { fontSize: 22, fontWeight: "700", color: theme.text, marginBottom: spacing.lg },
         label: { fontSize: 14, fontWeight: "600", color: theme.text, marginTop: spacing.md, marginBottom: spacing.xs },
-        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.md, padding: spacing.md, color: theme.text, backgroundColor: theme.surface, marginBottom: spacing.sm },
-        productRow: { flexDirection: "row" as const, justifyContent: "space-between", padding: spacing.sm, backgroundColor: theme.surface, borderRadius: borderRadius.sm, marginBottom: spacing.xs },
+        input: { borderWidth: 1, borderColor: theme.border, borderRadius: borderRadius.lg, padding: spacing.md, color: theme.text, backgroundColor: theme.inputBackground, marginBottom: spacing.sm },
+        productRow: { flexDirection: "row" as const, justifyContent: "space-between", padding: spacing.md, backgroundColor: theme.surface, borderRadius: borderRadius.xl, marginBottom: spacing.xs, borderWidth: 1, borderColor: theme.border },
         productName: { fontSize: 14, color: theme.text },
         productMeta: { fontSize: 12, color: theme.textSecondary },
         lineRow: { flexDirection: "row" as const, alignItems: "center", marginBottom: spacing.sm },
@@ -68,9 +70,7 @@ export default function StockReceivingScreen() {
         removeBtn: { color: theme.error, fontSize: 18 },
         total: { fontSize: 16, fontWeight: "700", color: theme.text, marginTop: spacing.md },
         error: { color: theme.error, marginTop: spacing.sm },
-        button: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: "center", marginTop: spacing.lg },
-        buttonDisabled: { opacity: 0.6 },
-        buttonText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        updateBtn: { marginTop: spacing.lg, minHeight: 48 },
       }),
     [theme]
   );
@@ -141,9 +141,13 @@ export default function StockReceivingScreen() {
           ))}
           <Text style={styles.total}>Total: {formatCents(totalCents)}</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSave} disabled={loading}>
-            <Text style={styles.buttonText}>{loading ? "Saving…" : "Save receipt"}</Text>
-          </TouchableOpacity>
+          <Button
+            title={loading ? "Saving…" : "Update inventory"}
+            onPress={handleSave}
+            loading={loading}
+            disabled={loading}
+            style={styles.updateBtn}
+          />
         </>
       )}
     </ScrollView>

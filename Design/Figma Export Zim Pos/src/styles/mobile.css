@@ -1,0 +1,37 @@
+/* Mobile-specific styles for native app feel */
+
+/* Prevent text selection on buttons for native feel */
+button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth scrolling for mobile */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent zoom on input focus */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* Hide scrollbar for cleaner mobile look */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Active state for touch feedback */
+.touch-feedback:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
