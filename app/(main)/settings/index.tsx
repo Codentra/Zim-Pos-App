@@ -153,6 +153,12 @@ export default function SettingsScreen() {
         onPress={() => router.push("/(main)/settings/receipt-settings")}
         theme={theme}
       />
+      <SettingsRow
+        title="Payment setup"
+        subtitle="PayNow & EcoCash — get paid on sales"
+        onPress={() => router.push("/(main)/settings/payment-setup")}
+        theme={theme}
+      />
 
       <Text style={styles.sectionTitle}>System & Hardware</Text>
       <SettingsRow

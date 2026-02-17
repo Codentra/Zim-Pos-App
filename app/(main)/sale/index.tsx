@@ -5,17 +5,15 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSale } from "@/contexts/SaleContext";
 import { useColors } from "@/contexts/ThemeContext";
+import { useCurrencyFormatSafe } from "@/lib/currencyFormat";
 import { listProducts } from "@/lib/data/repositories/productsRepo";
 import type { Product } from "@/lib/domain/types";
 import { spacing, borderRadius } from "@/constants/theme";
 
-function formatCents(c: number): string {
-  return "$" + (c / 100).toFixed(2);
-}
-
 export default function NewSaleScreen() {
   const theme = useColors();
   const router = useRouter();
+  const formatCents = useCurrencyFormatSafe();
   const { user } = useAuth();
   const { cart, addToCart, removeFromCart, updateQuantity, subtotalCents, totalCents, discountCents, setDiscountCents } = useSale();
   const [products, setProducts] = useState<Product[]>([]);

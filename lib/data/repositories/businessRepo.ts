@@ -18,6 +18,7 @@ export async function getBusinessById(id: string): Promise<Business | null> {
     address?: string;
     website?: string;
     taxNumber?: string;
+    baseCurrency?: string;
     createdAt: number;
     updatedAt: number;
     syncStatus: string;
@@ -25,7 +26,7 @@ export async function getBusinessById(id: string): Promise<Business | null> {
     deleted: number;
     lastError: string | null;
   }>(
-    "SELECT id, name, ownerName, phone, email, country, city, address, website, taxNumber, createdAt, updatedAt, syncStatus, convexId, deleted, lastError FROM businesses WHERE id = ? AND deleted = 0",
+    "SELECT id, name, ownerName, phone, email, country, city, address, website, taxNumber, baseCurrency, createdAt, updatedAt, syncStatus, convexId, deleted, lastError FROM businesses WHERE id = ? AND deleted = 0",
     id
   );
   if (!row) return null;

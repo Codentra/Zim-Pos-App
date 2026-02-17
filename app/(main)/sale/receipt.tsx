@@ -3,15 +3,13 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-nati
 import { useRouter } from "expo-router";
 import { useSale } from "@/contexts/SaleContext";
 import { useColors } from "@/contexts/ThemeContext";
+import { useCurrencyFormatSafe } from "@/lib/currencyFormat";
 import { spacing, borderRadius } from "@/constants/theme";
-
-function formatCents(c: number): string {
-  return "$" + (c / 100).toFixed(2);
-}
 
 export default function ReceiptScreen() {
   const theme = useColors();
   const router = useRouter();
+  const formatCents = useCurrencyFormatSafe();
   const { lastTransaction, setLastTransaction } = useSale();
 
   const styles = useMemo(

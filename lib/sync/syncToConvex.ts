@@ -44,10 +44,11 @@ export async function runSyncToConvex(
       address: string | null;
       website: string | null;
       taxNumber: string | null;
+      baseCurrency: string | null;
       updatedAt: number;
       deleted: number;
     }>(
-      "SELECT id, name, ownerName, phone, email, country, city, address, website, taxNumber, updatedAt, deleted FROM businesses WHERE syncStatus = 'PENDING' AND deleted = 0"
+      "SELECT id, name, ownerName, phone, email, country, city, address, website, taxNumber, baseCurrency, updatedAt, deleted FROM businesses WHERE syncStatus = 'PENDING' AND deleted = 0"
     );
     const bizIds: string[] = [];
     for (const row of businessRows) {
@@ -62,6 +63,7 @@ export async function runSyncToConvex(
         ...(row.address != null && row.address !== "" && { address: row.address }),
         ...(row.website != null && row.website !== "" && { website: row.website }),
         ...(row.taxNumber != null && row.taxNumber !== "" && { taxNumber: row.taxNumber }),
+        ...(row.baseCurrency != null && row.baseCurrency !== "" && { baseCurrency: row.baseCurrency }),
         updatedAt: row.updatedAt,
         ...(row.deleted !== 0 && { deleted: row.deleted }),
       }));
@@ -211,9 +213,10 @@ export async function runSyncToConvex(
       isRefund: number;
       originalTransactionId: string | null;
       notes: string;
+      currency: string | null;
       updatedAt: number;
       deleted: number;
-    }>("SELECT id, receiptNo, timestamp, subtotalCents, discountCents, taxCents, totalCents, paymentMethod, amountTenderedCents, changeGivenCents, customerId, cashierUserId, isRefund, originalTransactionId, notes, updatedAt, deleted FROM transactions WHERE syncStatus = 'PENDING' AND deleted = 0");
+    }>("SELECT id, receiptNo, timestamp, subtotalCents, discountCents, taxCents, totalCents, paymentMethod, amountTenderedCents, changeGivenCents, customerId, cashierUserId, isRefund, originalTransactionId, notes, currency, updatedAt, deleted FROM transactions WHERE syncStatus = 'PENDING' AND deleted = 0");
     const txRowsBatch = txRows.slice(0, BATCH_SIZE);
     const txIds: string[] = [];
     for (const row of txRowsBatch) {
@@ -234,6 +237,7 @@ export async function runSyncToConvex(
         isRefund: row.isRefund,
         ...(row.originalTransactionId != null && { originalTransactionId: row.originalTransactionId }),
         notes: row.notes,
+        ...(row.currency != null && row.currency !== "" && { currency: row.currency }),
         updatedAt: row.updatedAt,
         ...(row.deleted !== 0 && { deleted: row.deleted }),
       }));

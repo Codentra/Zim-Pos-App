@@ -3,6 +3,7 @@
  */
 import { getDb } from "../db";
 import { generateUUID } from "@/lib/utils/uuid";
+import { labelToCode } from "@/lib/currencyFormat";
 import type { Transaction, TransactionItem, PaymentMethod } from "@/lib/domain/types";
 export interface CartItem {
   productId: string;
@@ -47,13 +48,15 @@ export async function createSale(input: {
 
   let receiptNo: number;
   const items: TransactionItem[] = [];
+  const currencyRow = await db.getFirstAsync<{ value: string }>("SELECT value FROM app_meta WHERE key = 'defaultCurrency'");
+  const currency = currencyRow?.value ? labelToCode(currencyRow.value) : null;
 
   await db.withExclusiveTransactionAsync(async (txn) => {
     receiptNo = await getNextReceiptNo(txn);
 
     await txn.runAsync(
-      `INSERT INTO transactions (id, receiptNo, timestamp, subtotalCents, discountCents, taxCents, totalCents, paymentMethod, amountTenderedCents, changeGivenCents, customerId, cashierUserId, isRefund, originalTransactionId, notes, createdAt, updatedAt, syncStatus, convexId, deleted, lastError)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, 'PENDING', NULL, 0, NULL)`,
+      `INSERT INTO transactions (id, receiptNo, timestamp, subtotalCents, discountCents, taxCents, totalCents, paymentMethod, amountTenderedCents, changeGivenCents, customerId, cashierUserId, isRefund, originalTransactionId, notes, currency, createdAt, updatedAt, syncStatus, convexId, deleted, lastError)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, ?, 'PENDING', NULL, 0, NULL)`,
       transactionId,
       receiptNo,
       now,
@@ -67,6 +70,7 @@ export async function createSale(input: {
       input.customerId ?? null,
       input.cashierUserId,
       input.notes ?? "",
+      currency,
       now,
       now
     );

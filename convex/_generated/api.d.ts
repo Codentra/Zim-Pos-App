@@ -8,6 +8,11 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
+import type * as currency from "../currency.js";
+import type * as http from "../http.js";
+import type * as paymentGateway from "../paymentGateway.js";
+import type * as payments from "../payments.js";
 import type * as sync from "../sync.js";
 
 import type {
@@ -17,6 +22,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
+  currency: typeof currency;
+  http: typeof http;
+  paymentGateway: typeof paymentGateway;
+  payments: typeof payments;
   sync: typeof sync;
 }>;
 

@@ -30,6 +30,7 @@ export interface Business {
   address?: string;
   website?: string;
   taxNumber?: string;
+  baseCurrency?: string;
   createdAt: number;
   updatedAt: number;
   syncStatus: SyncStatus;
@@ -108,7 +109,7 @@ export interface SaleTotals {
   totalCents: number;
 }
 
-export type PaymentMethod = "CASH" | "ECOCASH" | "ONEMONEY" | "ZIPIT" | "SPLIT";
+export type PaymentMethod = "CASH" | "PAYNOW" | "ECOCASH" | "ONEMONEY" | "ZIPIT" | "SPLIT";
 
 export interface Transaction {
   id: string;

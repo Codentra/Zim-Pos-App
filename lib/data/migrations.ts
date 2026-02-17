@@ -279,4 +279,14 @@ export async function runMigrations(database: SQLite.SQLiteDatabase): Promise<vo
     } catch {}
     await database.runAsync("PRAGMA user_version = 9");
   }
+
+  if (user_version < 10) {
+    try {
+      await database.runAsync("ALTER TABLE businesses ADD COLUMN baseCurrency TEXT DEFAULT 'USD'");
+    } catch {}
+    try {
+      await database.runAsync("ALTER TABLE transactions ADD COLUMN currency TEXT");
+    } catch {}
+    await database.runAsync("PRAGMA user_version = 10");
+  }
 }

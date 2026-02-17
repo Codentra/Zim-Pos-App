@@ -16,9 +16,20 @@ export default defineSchema({
     address: v.optional(v.string()),
     website: v.optional(v.string()),
     taxNumber: v.optional(v.string()),
+    baseCurrency: v.optional(v.string()),
     updatedAt: v.number(),
     deleted: v.optional(v.number()),
   }).index("by_stable_id", ["id"]),
+
+  /** Exchange rates: 1 base unit = rate units of toCurrency (e.g. 1 USD = 15000 ZWL). */
+  exchange_rates: defineTable({
+    businessId: v.string(),
+    toCurrency: v.string(),
+    rate: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_business_id", ["businessId"])
+    .index("by_business_currency", ["businessId", "toCurrency"]),
 
   users: defineTable({
     id: v.string(),
@@ -91,6 +102,7 @@ export default defineSchema({
     discountCents: v.number(),
     taxCents: v.number(),
     totalCents: v.number(),
+    currency: v.optional(v.string()),
     paymentMethod: v.string(),
     amountTenderedCents: v.number(),
     changeGivenCents: v.number(),
@@ -184,4 +196,35 @@ export default defineSchema({
     lastSyncAt: v.number(),
     updatedAt: v.number(),
   }).index("by_business_id", ["businessId"]),
+
+  /** Per-business payment gateway credentials (PayNow, EcoCash, Stripe). Server-side only; never expose secrets to client. */
+  payment_configs: defineTable({
+    businessId: v.string(),
+    paynowIntegrationId: v.optional(v.string()),
+    paynowIntegrationKey: v.optional(v.string()),
+    ecocashMerchantId: v.optional(v.string()),
+    ecocashMerchantPin: v.optional(v.string()),
+    stripeSecretKey: v.optional(v.string()),
+    stripeWebhookSecret: v.optional(v.string()),
+    stripePublishableKey: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_business_id", ["businessId"]),
+
+  /** Pending gateway payments: created when app requests PayNow/EcoCash payment; updated by webhooks. */
+  pending_payments: defineTable({
+    businessId: v.string(),
+    gateway: v.string(), // "PAYNOW" | "ECOCASH"
+    amountCents: v.number(),
+    currency: v.optional(v.string()),
+    reference: v.string(),
+    status: v.string(), // "PENDING" | "COMPLETED" | "FAILED" | "EXPIRED"
+    externalId: v.optional(v.string()), // e.g. paynowreference
+    pollUrl: v.optional(v.string()),
+    paymentUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_business_id", ["businessId"])
+    .index("by_reference", ["reference"])
+    .index("by_external_id", ["externalId"]),
 });

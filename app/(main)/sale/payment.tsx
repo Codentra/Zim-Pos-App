@@ -1,23 +1,30 @@
-import { useState, useMemo } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Linking } from "react-native";
 import { useRouter } from "expo-router";
+import { useAction, useQuery } from "convex/react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusiness } from "@/contexts/BusinessContext";
 import { useSale } from "@/contexts/SaleContext";
 import { useColors } from "@/contexts/ThemeContext";
+import { useCurrencyFormatSafe } from "@/lib/currencyFormat";
 import { createSale } from "@/lib/data/repositories/salesRepo";
+import { api } from "@/lib/convexApi";
 import type { PaymentMethod } from "@/lib/domain/types";
 import { spacing, borderRadius } from "@/constants/theme";
 
-const METHODS: PaymentMethod[] = ["CASH", "ECOCASH", "ONEMONEY", "ZIPIT"];
+const METHODS: PaymentMethod[] = ["CASH", "PAYNOW", "ECOCASH", "ONEMONEY", "ZIPIT"];
 
-function formatCents(c: number): string {
-  return "$" + (c / 100).toFixed(2);
-}
+const GATEWAY_METHODS: PaymentMethod[] = ["PAYNOW", "ECOCASH"];
+const isGatewayPayment = (m: PaymentMethod) => GATEWAY_METHODS.includes(m);
+
+const CONVEX_SITE_URL = process.env.EXPO_PUBLIC_CONVEX_SITE_URL ?? "";
 
 export default function PaymentScreen() {
   const theme = useColors();
   const router = useRouter();
+  const formatCents = useCurrencyFormatSafe();
   const { user } = useAuth();
+  const { businessId } = useBusiness();
   const {
     cart,
     totalCents,
@@ -29,6 +36,14 @@ export default function PaymentScreen() {
   const [amountTenderedStr, setAmountTenderedStr] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [pendingReference, setPendingReference] = useState<string | null>(null);
+  const completedRef = useRef<string | null>(null);
+
+  const createPaymentAction = useAction(api.paymentGateway.createPayment);
+  const pendingStatus = useQuery(
+    api.paymentGateway.getPendingPaymentStatus,
+    pendingReference ? { reference: pendingReference } : "skip"
+  );
 
   const styles = useMemo(
     () =>
@@ -48,6 +63,9 @@ export default function PaymentScreen() {
         confirmBtn: { backgroundColor: theme.primary, paddingVertical: spacing.md, borderRadius: borderRadius.xl, alignItems: "center", marginTop: spacing.xl, minHeight: 48 },
         confirmBtnDisabled: { opacity: 0.6 },
         confirmBtnText: { color: theme.primaryText, fontSize: 16, fontWeight: "600" },
+        waiting: { marginTop: spacing.lg, padding: spacing.md, backgroundColor: theme.surface, borderRadius: borderRadius.md, color: theme.text, fontSize: 14 },
+        cancelBtn: { marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: "center" },
+        cancelBtnText: { color: theme.textSecondary, fontSize: 16 },
       }),
     [theme]
   );
@@ -60,12 +78,85 @@ export default function PaymentScreen() {
   const amountTenderedCents = Math.round(parseFloat(amountTenderedStr || "0") * 100);
   const changeCents = paymentMethod === "CASH" ? Math.max(0, amountTenderedCents - totalCents) : 0;
 
+  // When gateway payment completes, create sale and go to receipt
+  useEffect(() => {
+    if (!pendingReference || !pendingStatus) return;
+    if (pendingStatus.status === "FAILED") {
+      setError("Payment was cancelled or failed.");
+      setPendingReference(null);
+      return;
+    }
+    if (
+      pendingStatus.status !== "COMPLETED" ||
+      !user ||
+      cart.length === 0 ||
+      completedRef.current === pendingReference
+    )
+      return;
+    completedRef.current = pendingReference;
+    (async () => {
+      try {
+        const { transaction, items } = await createSale({
+          items: cart,
+          discountCents,
+          paymentMethod,
+          amountTenderedCents: totalCents,
+          changeGivenCents: 0,
+          cashierUserId: user.id,
+        });
+        setLastTransaction({ transaction, items });
+        clearCart();
+        setPendingReference(null);
+        router.replace("/(main)/sale/receipt");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Sale failed");
+        setPendingReference(null);
+      }
+    })();
+  }, [pendingReference, pendingStatus?.status, user, cart.length, discountCents, paymentMethod, totalCents]);
+
   const handleConfirm = async () => {
     setError("");
     if (paymentMethod === "CASH" && amountTenderedCents < totalCents) {
       setError("Amount tendered is less than total");
       return;
     }
+
+    if (isGatewayPayment(paymentMethod)) {
+      if (!businessId || !CONVEX_SITE_URL) {
+        setError("Payment gateway not configured. Set EXPO_PUBLIC_CONVEX_SITE_URL.");
+        return;
+      }
+      setLoading(true);
+      const reference = `TXN-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      const gateway = paymentMethod === "PAYNOW" ? "PAYNOW" : "ECOCASH";
+      const resultUrl = `${CONVEX_SITE_URL.replace(/\/$/, "")}/webhooks/${gateway.toLowerCase()}`;
+      const returnUrl = `${CONVEX_SITE_URL.replace(/\/$/, "")}/payment-return`;
+      try {
+        const result = await createPaymentAction({
+          businessId,
+          gateway,
+          amountCents: totalCents,
+          reference,
+          returnUrl,
+          resultUrl,
+        });
+        if (!result.success) {
+          setError(result.error ?? "Payment request failed");
+          setLoading(false);
+          return;
+        }
+        if (result.paymentUrl) {
+          setPendingReference(reference);
+          await Linking.openURL(result.paymentUrl);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Payment request failed");
+      }
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const { transaction, items } = await createSale({
@@ -121,13 +212,34 @@ export default function PaymentScreen() {
         </>
       )}
 
+      {pendingReference ? (
+        <>
+          <Text style={styles.waiting}>Waiting for payment… Complete payment in the browser then return here.</Text>
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => setPendingReference(null)}>
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
+        </>
+      ) : null}
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity
-        style={[styles.confirmBtn, loading && styles.confirmBtnDisabled]}
+        style={[styles.confirmBtn, (loading || pendingReference) && styles.confirmBtnDisabled]}
         onPress={handleConfirm}
-        disabled={loading || (paymentMethod === "CASH" && amountTenderedCents < totalCents)}
+        disabled={
+          loading ||
+          !!pendingReference ||
+          (paymentMethod === "CASH" && amountTenderedCents < totalCents)
+        }
       >
-        <Text style={styles.confirmBtnText}>{loading ? "Processing…" : "Confirm sale"}</Text>
+        <Text style={styles.confirmBtnText}>
+          {pendingReference
+            ? "Waiting…"
+            : loading
+              ? "Processing…"
+              : isGatewayPayment(paymentMethod)
+                ? `Pay with ${paymentMethod}`
+                : "Confirm sale"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
